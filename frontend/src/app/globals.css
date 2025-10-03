@@ -112,6 +112,27 @@
   --sidebar-ring: oklch(0.552 0.016 285.938);
 }
 
+/* Default colors for dark theme */
+:root {
+  --background: oklch(0.141 0.005 285.823); /* dark background */
+  --foreground: oklch(0.985 0 0); /* light text */
+  --card: oklch(0.21 0.006 285.885);
+  --card-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.92 0.004 286.32);
+  --primary-foreground: oklch(0.21 0.006 285.885);
+  /* add other variables you need */
+}
+
+/* Optional: Light theme toggle */
+.dark {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.141 0.005 285.823);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.141 0.005 285.823);
+  --primary: oklch(0.21 0.006 285.885);
+  --primary-foreground: oklch(0.985 0 0);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
