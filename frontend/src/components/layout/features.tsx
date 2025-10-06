@@ -40,7 +40,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ title, description, isExpande
         <button
           onClick={onToggle}
           aria-expanded={isExpanded}
-          className="flex h-15 w-15 flex-shrink-0 items-center justify-center rounded-full border bg-background text-xl font-light text-muted-foreground transition-transform duration-300 ease-in-out hover:scale-110 focus:outline-none"
+          className="flex h-15 w-15 flex-shrink-0 items-center justify-center rounded-full border bg-background text-xl font-light text-muted-foreground transition-transform duration-300 ease-in-out hover:scale-110 focus:outline-none text-white"
         >
           <motion.div
             key={isExpanded ? "minus" : "plus"}
