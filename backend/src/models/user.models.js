@@ -1,22 +1,13 @@
-// id string pk
-//   fullname string
-//   username string
-//   email string
-//   password string
-//   avatar string
-//   Interviews ObjectId[] interviews
-//   refreshToken string
-
 import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 
 const userSchema = new Schema(
   {
     username: {
       type: String,
       required: true,
-      unique: true,
       lowercase: true,
       trim: true,
       index: true,
@@ -51,8 +42,29 @@ const userSchema = new Schema(
     refreshToken: {
       type: String,
     },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    otp: {
+      type: String,
+    },
+    otpExpires: {
+      type: Date,
+    },
+    otpAttempts: {
+      type: Number,
+      default: 0,
+    },
+    otpResendCount: {
+      type: Number,
+      default: 0,
+    },
+    lastOtpSentAt: {
+      type: Date,
+    },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 userSchema.pre("save", async function (next) {
@@ -66,8 +78,6 @@ userSchema.methods.isPasswordCorrect = async function (password) {
 };
 
 userSchema.methods.generateAccessToken = function () {
-  //short lived access token
-  console.log("invoked");
   return jwt.sign(
     {
       _id: this._id,
@@ -75,7 +85,7 @@ userSchema.methods.generateAccessToken = function () {
       username: this.username,
     },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: process.env.ACCESS_TOKEN_EXPIRY },
+    { expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
   );
 };
 
@@ -85,8 +95,48 @@ userSchema.methods.generateRefreshToken = function () {
       _id: this._id,
     },
     process.env.REFRESH_TOKEN_SECRET,
-    { expiresIn: process.env.REFRESH_TOKEN_EXPIRY },
+    { expiresIn: process.env.REFRESH_TOKEN_EXPIRY }
   );
+};
+
+userSchema.methods.generateOtp = function () {
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
+
+  this.otp = hashedOtp;
+  this.otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+  this.otpAttempts = 0;
+  this.lastOtpSentAt = new Date();
+  this.otpResendCount += 1;
+
+  return otp;
+};
+
+userSchema.methods.verifyOtp = async function (enteredOtp) {
+  const hashed = crypto.createHash("sha256").update(enteredOtp).digest("hex");
+
+  if (Date.now() > this.otpExpires) {
+    throw new Error("OTP expired");
+  }
+
+  if (this.otpAttempts >= 5) {
+    throw new Error("Too many failed attempts");
+  }
+
+  const isMatch = hashed === this.otp;
+  if (!isMatch) {
+    this.otpAttempts += 1;
+    await this.save();
+    throw new Error("Invalid OTP");
+  }
+
+  this.isVerified = true;
+  this.otp = undefined;
+  this.otpExpires = undefined;
+  this.otpAttempts = 0;
+  await this.save();
+
+  return true;
 };
 
 export const User = mongoose.model("User", userSchema);

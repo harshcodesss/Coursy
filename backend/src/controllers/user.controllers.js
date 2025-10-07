@@ -3,6 +3,8 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.models.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import { sendEmail } from "../utils/sendEmail.js";
+import { otpEmailTemplate } from "../utils/emailTemplate.js";
 import mongoose from "mongoose";
 
 const generateAccessAndRefreshToken = async (userId) => {
@@ -29,73 +31,99 @@ const generateAccessAndRefreshToken = async (userId) => {
   }
 };
 
+
 const registerUser = asyncHandler(async (req, res) => {
-  //TODO
-  console.log("starting registration");
-  console.log(req.body);
+  console.log("Starting registration...");
   const { fullname, email, username, password } = req.body;
 
-  //validation
-  if (
-    [fullname, email, username, password].some((field) => field?.trim() === "")
-  ) {
+  if ([fullname, email, username, password].some((field) => field?.trim() === "")) {
     throw new ApiError(400, "All fields are required");
   }
 
-  const existedUser = await User.findOne({
-    $or: [{ username }, { email }],
-  });
-
+  const existedUser = await User.findOne({ $or: [{ email }] });
   if (existedUser) {
-    throw new ApiError(409, "User with email or username already exists");
+    throw new ApiError(409, "User with this email or username already exists");
   }
 
-  // console.warn(req.files);
-  // const avatarLocalPath = req.files?.avatar?.[0]?.path;
-
-  // let avatar;
-  // try {
-  //   avatar = await uploadOnCloudinary(avatarLocalPath);
-  //   console.log("Uploaded Avatar", avatar);
-  // } catch (error) {
-  //   console.log("Error uploading avatar", error);
-  //   throw new ApiError(500, "Failed to upload avatar");
-  // }
-
   try {
-    const user = await User.create({
+    const user = new User({
       fullname,
-      avatar: "../../public/temp/avatarLocal.jpg",
       email,
-      password,
       username: username.toLowerCase(),
+      password,
+      avatar: "../../public/temp/avatarLocal.jpg",
     });
 
-    console.log("Created User", user);
+    const otp = user.generateOtp();
 
-    const createdUser = await User.findById(user._id).select(
-      "-password -refreshToken"
+    await user.save();
+
+    console.log("Created User:", user);
+
+    await sendEmail({
+      to: user.email,
+      subject: "Verify your email - Interview Mate",
+      html: otpEmailTemplate(otp, fullname),
+    });
+
+    const responseUser = {
+      _id: user._id,
+      fullname: user.fullname,
+      username: user.username,
+      email: user.email,
+      avatar: user.avatar,
+      isVerified: user.isVerified,
+    };
+
+    return res.status(201).json(
+      new ApiResponse(
+        201,
+        responseUser,
+        "User registered successfully! Please check your email for the OTP to verify your account."
+      )
     );
-
-    console.log("Created User", createdUser);
-
-    if (!createdUser) {
-      throw new ApiError(500, "Something went wrong while registering a user");
-    }
-
-    return res
-      .status(201)
-      .json(new ApiResponse(201, createdUser, "User registerd Successfully"));
   } catch (error) {
-    // console.log("User Creation failed");
-    // if (avatar) {
-    //   // await deleteFromCloudinary(avatar.public_id);
-    // }
-    console.error("User creation error:", error);
-    throw new ApiError(
-      500,
-      "Something went wrong while registering a user and images were deleted"
+    console.error("Registration error:", error);
+    throw new ApiError(500, "Something went wrong while registering the user");
+  }
+});
+
+export const verifyOtp = asyncHandler(async (req, res) => {
+  const { userId, otp } = req.body;
+
+  if (!userId || !otp) {
+    throw new ApiError(400, "User ID and OTP are required");
+  }
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  if (user.isVerified) {
+    return res.status(200).json(
+      new ApiResponse(200, null, "User is already verified")
     );
+  }
+
+  try {
+    await user.verifyOtp(otp);
+
+    const responseUser = {
+      _id: user._id,
+      fullname: user.fullname,
+      username: user.username,
+      email: user.email,
+      avatar: user.avatar,
+      isVerified: user.isVerified,
+    };
+
+    return res.status(200).json(
+      new ApiResponse(200, responseUser, "Email verified successfully!")
+    );
+  } catch (error) {
+    throw new ApiError(400, error.message);
   }
 });
 
