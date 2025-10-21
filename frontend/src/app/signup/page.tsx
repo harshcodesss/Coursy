@@ -101,18 +101,6 @@ export default function Signup() {
           </div>
 
           <div className="relative">
-            <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              name="username"      // CORRECTED: Added name attribute
-              value={form.username} // CORRECTED: Added value attribute
-              placeholder="Username"
-              onChange={handleChange}
-              className="w-full rounded-md border border-slate-700 bg-slate-700/50 py-3 pl-10 pr-4 text-white placeholder-slate-400 transition-colors duration-300 focus:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-400"
-            />
-          </div>
-
-          <div className="relative">
             <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="email"

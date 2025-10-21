@@ -4,6 +4,7 @@ import { User } from "../models/user.models.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+import { sendVerificationEmail } from "../utils/sendEmail.js";
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
@@ -33,21 +34,21 @@ const registerUser = asyncHandler(async (req, res) => {
   //TODO
   console.log("starting registration");
   console.log(req.body);
-  const { fullname, email, username, password } = req.body;
+  const { fullname, email, password } = req.body;
 
   //validation
   if (
-    [fullname, email, username, password].some((field) => field?.trim() === "")
+    [fullname, email, password].some((field) => field?.trim() === "")
   ) {
     throw new ApiError(400, "All fields are required");
   }
 
   const existedUser = await User.findOne({
-    $or: [{ username }, { email }],
+    $or: [{ email }],
   });
 
   if (existedUser) {
-    throw new ApiError(409, "User with email or username already exists");
+    throw new ApiError(409, "User with email already exists");
   }
 
   // console.warn(req.files);
@@ -58,35 +59,45 @@ const registerUser = asyncHandler(async (req, res) => {
   //   avatar = await uploadOnCloudinary(avatarLocalPath);
   //   console.log("Uploaded Avatar", avatar);
   // } catch (error) {
-  //   console.log("Error uploading avatar", error);
-  //   throw new ApiError(500, "Failed to upload avatar");
-  // }
+    //   console.log("Error uploading avatar", error);
+    //   throw new ApiError(500, "Failed to upload avatar");
+    // }
 
-  try {
-    const user = await User.create({
-      fullname,
-      avatar: "../../public/temp/avatarLocal.jpg",
-      email,
-      password,
-      username: username.toLowerCase(),
-    });
-
-    console.log("Created User", user);
-
-    const createdUser = await User.findById(user._id).select(
-      "-password -refreshToken"
-    );
-
-    console.log("Created User", createdUser);
-
-    if (!createdUser) {
-      throw new ApiError(500, "Something went wrong while registering a user");
-    }
-
-    return res
+    
+    try {
+      const user = await User.create({
+        fullname,
+        avatar: "../../public/temp/avatarLocal.jpg",
+        email,
+        password,
+      });
+      
+      console.log("Created User", user);
+      
+      const createdUser = await User.findById(user._id).select(
+        "-password -refreshToken"
+      );
+      
+      console.log("Created User", createdUser);
+      
+      if (!createdUser) {
+        throw new ApiError(500, "Something went wrong while registering a user");
+      }
+      
+      
+      const token = jwt.sign(
+        { id: user._id, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: "15m" }
+      );
+      
+      // Send verification email
+      await sendVerificationEmail(user.email, token);
+      
+      return res
       .status(201)
       .json(new ApiResponse(201, createdUser, "User registerd Successfully"));
-  } catch (error) {
+    } catch (error) {
     // console.log("User Creation failed");
     // if (avatar) {
     //   // await deleteFromCloudinary(avatar.public_id);
@@ -96,6 +107,49 @@ const registerUser = asyncHandler(async (req, res) => {
       500,
       "Something went wrong while registering a user and images were deleted"
     );
+  }
+});
+
+export const verifyEmail = asyncHandler(async (req, res) => {
+  const { token } = req.params;
+
+  if (!token) {
+    throw new ApiError(400, "Verification token is missing");
+  }
+
+  try {
+    // 1️⃣ Decode token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      if (err.name === "TokenExpiredError") {
+        throw new ApiError(400, "Verification link has expired");
+      } else {
+        throw new ApiError(400, "Invalid verification link");
+      }
+    }
+
+    // 2️⃣ Find user
+    const user = await User.findById(decoded.id);
+    if (!user) throw new ApiError(404, "User not found");
+
+    // 3️⃣ Check if already verified
+    if (user.verified) {
+      // Redirect to frontend "already verified" page
+      return res.redirect(`${process.env.FRONTEND_URL}/already-verified`);
+    }
+
+    // 4️⃣ Mark as verified
+    user.verified = true;
+    await user.save();
+
+    // 5️⃣ Redirect to frontend success page
+    return res.redirect(`${process.env.FRONTEND_URL}/verified-success`);
+  } catch (error) {
+    console.error("Verification error:", error);
+    // Redirect to frontend error page
+    return res.redirect(`${process.env.FRONTEND_URL}/verification-error`);
   }
 });
 

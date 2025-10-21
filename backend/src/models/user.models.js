@@ -13,14 +13,6 @@ import jwt from "jsonwebtoken";
 
 const userSchema = new Schema(
   {
-    username: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true,
-      index: true,
-    },
     email: {
       type: String,
       required: true,
@@ -51,6 +43,10 @@ const userSchema = new Schema(
     refreshToken: {
       type: String,
     },
+    verified: {
+      type: Boolean,
+      default: false,
+    }
   },
   { timestamps: true },
 );
@@ -72,7 +68,6 @@ userSchema.methods.generateAccessToken = function () {
     {
       _id: this._id,
       email: this.email,
-      username: this.username,
     },
     process.env.ACCESS_TOKEN_SECRET,
     { expiresIn: process.env.ACCESS_TOKEN_EXPIRY },
