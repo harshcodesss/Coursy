@@ -5,6 +5,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import { sendVerificationEmail } from "../utils/sendEmail.js";
+import crypto from "crypto";
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
@@ -63,94 +64,76 @@ const registerUser = asyncHandler(async (req, res) => {
     //   throw new ApiError(500, "Failed to upload avatar");
     // }
 
-    
+
+    // Generating OTP and Expiry Time
+    const generatedOTP = crypto.randomInt(1000, 9999); // Type: Number
+    const generatedOTPExpiry = new Date(Date.now() + 10 * 60 * 1000);// 10 minutes from now
+
     try {
       const user = await User.create({
         fullname,
         avatar: "../../public/temp/avatarLocal.jpg",
         email,
         password,
+        otp: generatedOTP,
+        otpExpiry: generatedOTPExpiry
       });
       
       console.log("Created User", user);
       
-      const createdUser = await User.findById(user._id).select(
-        "-password -refreshToken"
-      );
-      
-      console.log("Created User", createdUser);
-      
-      if (!createdUser) {
-        throw new ApiError(500, "Something went wrong while registering a user");
-      }
-      
-      
-      const token = jwt.sign(
-        { id: user._id, email: user.email },
-        process.env.JWT_SECRET,
-        { expiresIn: "15m" }
-      );
-      
-      // Send verification email
-      await sendVerificationEmail(user.email, token);
-      
-      return res
-      .status(201)
-      .json(new ApiResponse(201, createdUser, "User registerd Successfully"));
-    } catch (error) {
-    // console.log("User Creation failed");
-    // if (avatar) {
-    //   // await deleteFromCloudinary(avatar.public_id);
-    // }
+      console.log("Created User", user);
+    
+    
+    // Sending Email from the backend
+    await sendVerificationEmail(user.email, generatedOTP.toString()); 
+
+    const verificationToken = jwt.sign(
+      { id: user._id },
+      process.env.VERIFICATION_TOKEN_SECRET,
+      { expiresIn: process.env.VERIFICATION_TOKEN_EXPIRY }
+    );
+
+    const createdUser = await User.findById(user._id).select(
+      "-password -refreshToken -otp -otp_expiry" 
+    );
+    
+    console.log("Created User to return", createdUser);
+    
+    if (!createdUser) {
+      throw new ApiError(500, "Something went wrong while registering a user");
+    }
+    
+    return res
+    .status(201)
+    .json(new ApiResponse(
+        201, 
+        createdUser, 
+        verificationToken,
+        "User registered successfully. Please check your email for OTP."
+    ));
+
+  } catch (error) {
     console.error("User creation error:", error);
     throw new ApiError(
       500,
-      "Something went wrong while registering a user and images were deleted"
+      "Something went wrong while registering a user"
     );
   }
 });
 
-export const verifyEmail = asyncHandler(async (req, res) => {
-  const { token } = req.params;
-
-  if (!token) {
-    throw new ApiError(400, "Verification token is missing");
+const verifyOTP = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+  if (user.otp !== otp) {
+    throw new ApiError(400, "Invalid OTP");
   }
 
-  try {
-    // 1️⃣ Decode token
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (err) {
-      if (err.name === "TokenExpiredError") {
-        throw new ApiError(400, "Verification link has expired");
-      } else {
-        throw new ApiError(400, "Invalid verification link");
-      }
-    }
-
-    // 2️⃣ Find user
-    const user = await User.findById(decoded.id);
-    if (!user) throw new ApiError(404, "User not found");
-
-    // 3️⃣ Check if already verified
-    if (user.verified) {
-      // Redirect to frontend "already verified" page
-      return res.redirect(`${process.env.FRONTEND_URL}/already-verified`);
-    }
-
-    // 4️⃣ Mark as verified
-    user.verified = true;
-    await user.save();
-
-    // 5️⃣ Redirect to frontend success page
-    return res.redirect(`${process.env.FRONTEND_URL}/verified-success`);
-  } catch (error) {
-    console.error("Verification error:", error);
-    // Redirect to frontend error page
-    return res.redirect(`${process.env.FRONTEND_URL}/verification-error`);
-  }
+  user.verified = true;
+  await user.save();
+  return res.status(200).json(new ApiResponse(200, user, "User verified"));
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -358,6 +341,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 export {
   registerUser,
   loginUser,
+  verifyOTP,
   refreshToken,
   logoutUser,
   changeCurrentPassword,

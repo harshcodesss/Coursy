@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { registerUser, loginUser, verifyEmail } from "../controllers/user.controllers.js";
+import { registerUser, loginUser, verifyOTP } from "../controllers/user.controllers.js";
 import { upload } from "../middlewares/multer.middlewares.js";
 import { verifyjWT } from "../middlewares/auth.middlewares.js";
 
@@ -11,7 +11,7 @@ router.route("/register").post(
   registerUser
 );
 
-router.route("/verify-email/:token").get(verifyEmail);
+router.route("/verify").post(verifyOTP);
 
 router.route("/login").post(loginUser);
 
