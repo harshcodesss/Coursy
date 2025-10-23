@@ -100,13 +100,17 @@ const registerUser = asyncHandler(async (req, res) => {
       throw new ApiError(500, "Something went wrong while registering a user");
     }
     
+    const responseData = {
+      user: createdUser,
+      verificationToken: verificationToken
+    };
+    
     return res
     .status(201)
     .json(new ApiResponse(
         201, 
-        createdUser, 
-        verificationToken,
-        "User registered successfully. Please check your email for OTP."
+        responseData, // Pass the object here
+        "User registered successfully. Please check your email for OTP." // This is the message
     ));
 
   } catch (error) {
@@ -125,6 +129,8 @@ const verifyOTP = asyncHandler(async (req, res) => {
   if( !otp || !token) {
     throw new ApiError(400, "OTP and token are required");
   }
+
+  console.log(token);
 
   let decodedToken;
   try{

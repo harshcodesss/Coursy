@@ -37,7 +37,7 @@ export const sendVerificationEmail = async (toEmail, otp) => {
           Hello,
         </p>
         <p style="font-size: 16px; color: #555;">
-          Thank you for registering with Your App Name. Please use the following One-Time Password (OTP) to verify your email address:
+          Thank you for registering with Coursy. Please use the following One-Time Password (OTP) to verify your email address:
         </p>
         <div style="text-align: center; margin: 25px 0;">
           <span style="font-size: 24px; font-weight: bold; color: #000; background-color: #f0f0f0; padding: 10px 20px; border-radius: 5px; letter-spacing: 2px;">
@@ -49,7 +49,7 @@ export const sendVerificationEmail = async (toEmail, otp) => {
         </p>
         <p style="font-size: 16px; color: #555;">
           Best regards,<br/>
-          The Your App Name Team
+          Coursy Developer
         </p>
       </div>
     `;
@@ -57,7 +57,7 @@ export const sendVerificationEmail = async (toEmail, otp) => {
     // 3. Create the mailOptions with our new variables
     const mailOptions = {
       // 4. Use the professional "from" format
-      from: `"Your App Name" <${process.env.GOOGLE_EMAIL}>`,
+      from: `"Coursy" <${process.env.GOOGLE_EMAIL}>`,
       to: toEmail,
       subject: subject,
       html: html,

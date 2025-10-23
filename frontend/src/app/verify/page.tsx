@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, ChangeEvent, KeyboardEvent, ClipboardEvent, FormEvent } from "react";
+import React, { useState, useRef, ChangeEvent, KeyboardEvent, ClipboardEvent, FormEvent, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -11,72 +11,74 @@ export default function Verify() {
   const router = useRouter();
   const [otp, setOtp] = useState<string[]>(new Array(4).fill(""));
   const [error, setError] = useState<string>("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [info, setInfo] = useState<string>(""); // For success messages
+  const [isLoading, setIsLoading] = useState(false); // For main verify button
+  const [isResending, setIsResending] = useState(false); // For resend button
+  const [cooldown, setCooldown] = useState(0); // Cooldown timer
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (cooldown > 0) {
+      timer = setInterval(() => {
+        setCooldown((prev) => prev - 1);
+      }, 1000);
+    }
+    // Cleanup interval on component unmount or when cooldown reaches 0
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
+  // --- (handleChange, handleKeyDown, handlePaste are unchanged) ---
   const handleChange = (e: ChangeEvent<HTMLInputElement>, index: number) => {
     const { value } = e.target;
     if (/[^0-9]/.test(value)) return;
-
     const newOtp = [...otp];
     newOtp[index] = value.slice(-1);
     setOtp(newOtp);
-    setError(""); // Clear error on input
-
-    // Move focus to the next input
+    setError("");
+    setInfo(""); // Clear info message on new input
     if (value && index < 3 && inputRefs.current[index + 1]) {
       inputRefs.current[index + 1]!.focus();
     }
   };
-
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>, index: number) => {
-    // Move focus to the previous input on backspace if the current input is empty
     if (e.key === "Backspace" && !otp[index] && index > 0 && inputRefs.current[index - 1]) {
       inputRefs.current[index - 1]!.focus();
     }
   };
-
   const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
-    const pasteData = e.clipboardData
-      .getData("text")
-      .trim()
-      .slice(0, 4);
-
-    // Check if pasted data is 4 digits
+    const pasteData = e.clipboardData.getData("text").trim().slice(0, 4);
     if (/^\d{4}$/.test(pasteData)) {
       const newOtp = pasteData.split('');
       setOtp(newOtp);
-      // Focus on the last input
       if (inputRefs.current[3]) {
         inputRefs.current[3]!.focus();
       }
     }
   };
-
-
+  
+  // --- handleVerify is unchanged ---
   const handleVerify = async (e: FormEvent) => {
     e.preventDefault();
     const fullOtp = otp.join('');
-
     setIsLoading(true);
     setError("");
+    setInfo("");
 
     if (fullOtp.length !== 4) {
       setError("Please enter a 4-digit OTP.");
       setIsLoading(false);
       return;
     }
-
     if (!token) {
       setError("No verification token found. Please try registering again.");
       setIsLoading(false);
       return;
     }
-
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users/verify`,{
@@ -87,9 +89,7 @@ export default function Verify() {
           token: token 
         })
       });
-
       const data = await response.json();
-
       if (response.ok) {
         console.log("Verification successful!", data);
         router.push("/dashboard");
@@ -102,14 +102,53 @@ export default function Verify() {
     } finally {
       setIsLoading(false);
     }
-    
+  };
+
+  // --- NEW: Resend OTP Logic ---
+  const handleResendOTP = async () => {
+    // Prevent resend if cooldown is active or already resending
+    if (isResending || cooldown > 0) return;
+
+    if (!token) {
+      setError("No verification token found. Cannot resend OTP.");
+      return;
+    }
+
+    setIsResending(true);
+    setError("");
+    setInfo("");
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/users/resendOTP`, { // User's specified route
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token }) // Send the token
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setInfo("A new OTP has been sent to your email.");
+        setCooldown(30); // Start 30-second cooldown
+      } else {
+        // Handle errors, e.g., "Too many attempts"
+        setError(data.message || "Failed to resend OTP.");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("An error occurred. Please try again.");
+    } finally {
+      setIsResending(false);
+    }
   };
 
   const handleVerifyLater = () => {
     router.push("/dashboard");
   };
 
-  const isVerifyDisabled = otp.join('').length !== 4;
+  const isVerifyDisabled = otp.join('').length !== 4 || isLoading;
+  const isResendDisabled = isResending || cooldown > 0;
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black text-white flex items-center justify-center p-4">
@@ -158,9 +197,7 @@ export default function Verify() {
               <input
                 key={index}
                 ref={(el: HTMLInputElement | null) => {
-                  if (el !== null) {
-                    inputRefs.current[index] = el;
-                  }
+                  inputRefs.current[index] = el;
                 }}
                 type="tel"
                 inputMode="numeric"
@@ -175,12 +212,18 @@ export default function Verify() {
             ))}
           </div>
 
-          {/* --- Error Message --- */}
+          {/* --- Info/Error Messages --- */}
           {error && (
             <p className="text-center text-sm text-red-400 mb-4">
               {error}
             </p>
           )}
+          {info && (
+            <p className="text-center text-sm text-green-400 mb-4">
+              {info}
+            </p>
+          )}
+
 
           {/* --- Action Buttons --- */}
           <div className="flex flex-col gap-4">
@@ -215,10 +258,16 @@ export default function Verify() {
         <p className="text-center text-sm text-slate-400 mt-6">
           Didn't receive the code?{" "}
           <button
-            onClick={() => console.log("Resend OTP")} 
-            className="font-medium text-cyan-400 hover:text-cyan-300 transition-colors duration-150"
+            type="button" // Add type="button" to prevent form submission
+            onClick={handleResendOTP}
+            disabled={isResendDisabled} // Disable based on state
+            className="font-medium text-cyan-400 hover:text-cyan-300 transition-colors duration-150
+                       disabled:text-slate-500 disabled:cursor-not-allowed"
           >
-            Resend
+            {/* Dynamic Button Text */}
+            {isResending ? "Sending..." : 
+              (cooldown > 0 ? `Resend in ${cooldown}s` : "Resend")
+            }
           </button>
         </p>
 
@@ -239,3 +288,4 @@ export default function Verify() {
     </div>
   );
 }
+
