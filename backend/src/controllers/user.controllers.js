@@ -80,9 +80,6 @@ const registerUser = asyncHandler(async (req, res) => {
       });
       
       console.log("Created User", user);
-      
-      console.log("Created User", user);
-    
     
     // Sending Email from the backend
     await sendVerificationEmail(user.email, generatedOTP.toString()); 
@@ -178,6 +175,51 @@ const verifyOTP = asyncHandler(async (req, res) => {
       "Email verified successfully. User is now logged in."
     )
   );
+});
+
+const resendOTP = asyncHandler(async (req, res) => {
+
+  const { token } = req.body;
+
+  if(!token) {
+    throw new ApiError(400, "Please Try Registering Again");
+  }
+
+  let decodedToken;
+  try{
+    decodedToken = jwt.verify(token,process.env.VERIFICATION_TOKEN_SECRET);
+  }catch{
+    throw new ApiError(400, "Invalid token");
+  }
+
+  const user_id = decodedToken?.id;
+
+  const user = await User.findById(user_id);
+
+  if(!user){
+    throw new ApiError(404, "User not found");
+  }
+
+  if(user.verified){
+    throw new ApiError(400, "User is already verified");
+  }
+
+  if(user.resendOtpAttempts >= 3){
+    throw new ApiError(400, "You have exceeded the maximum number of attempts");
+  }
+
+  user.resendOtpAttempts += 1;
+  
+  const generatedOTP = crypto.randomInt(1000, 9999); 
+  const generatedOTPExpiry = new Date(Date.now() + 10 * 60 * 1000);
+  
+  user.otp = generatedOTP;
+  user.otp_expiry = generatedOTPExpiry;
+  await user.save();
+
+  await sendVerificationEmail(user.email, generatedOTP.toString());
+
+  return res.status(200).json(new ApiResponse(200, {}, "OTP resent successfully"));
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -386,6 +428,7 @@ export {
   registerUser,
   loginUser,
   verifyOTP,
+  resendOTP,
   refreshToken,
   logoutUser,
   changeCurrentPassword,

@@ -53,6 +53,10 @@ const userSchema = new Schema(
     otp_expiry: {
       type: Date,
     },
+    resendOtpAttempts: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true },
 );
