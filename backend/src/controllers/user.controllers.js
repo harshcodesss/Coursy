@@ -122,18 +122,62 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const verifyOTP = asyncHandler(async (req, res) => {
-  const { email, otp } = req.body;
-  const user = await User.findOne({ email });
-  if (!user) {
+  
+  const {token,otp} = req.body;
+
+  if( !otp || !token) {
+    throw new ApiError(400, "OTP and token are required");
+  }
+
+  let decodedToken;
+  try{
+    decodedToken = jwt.verify(token,process.env.VERIFICATION_TOKEN_SECRET);
+  }catch{
+    throw new ApiError(400, "Invalid token");
+  }
+
+  const userId = decodedToken?.id;
+
+  const user = await User.findById(userId);
+
+  if(!user){
     throw new ApiError(404, "User not found");
   }
-  if (user.otp !== otp) {
+
+  if (user.verified) {
+    return res.status(200).json(new ApiResponse(200, {}, "User is already verified"));
+  }
+
+  if (user.otp !== Number(otp)) {
     throw new ApiError(400, "Invalid OTP");
   }
 
+  if (user.otp_expiry < new Date()) {
+    throw new ApiError(400, "OTP has expired");
+  }
+
   user.verified = true;
+  user.otp = null;
+  user.otp_expiry = null;
   await user.save();
-  return res.status(200).json(new ApiResponse(200, user, "User verified"));
+
+  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id);
+
+  const options = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+  };
+
+  return res
+  .status(200)
+  .cookie("refreshToken", refreshToken, options)
+  .json(
+    new ApiResponse(
+      200,
+      { accessToken, refreshToken },
+      "Email verified successfully. User is now logged in."
+    )
+  );
 });
 
 const loginUser = asyncHandler(async (req, res) => {

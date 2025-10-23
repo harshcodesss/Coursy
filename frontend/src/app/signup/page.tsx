@@ -47,7 +47,14 @@ export default function Signup() {
         throw new Error(data.message || "Registration failed");
       }
 
-      router.push("/dashboard");
+      const verificationToken = data.data;
+
+      if(!verificationToken){
+        throw new Error("Verification token not found");
+      }
+
+      router.push(`/verify?token=${verificationToken}`);
+      
     } catch (err: any) {
       setError(err.message);
     } finally {
