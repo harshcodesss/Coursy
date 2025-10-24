@@ -400,15 +400,15 @@ const forgotPassword = asyncHandler(async (req, res) => {
   }
 });
 
-const changeCurrentPassword = asyncHandler(async (req, res) => {
-  const { oldPassword, newPassword } = req.body;
+const resetPassword = asyncHandler(async (req, res) => {
+  const { resetToken, newPassword } = req.body;
 
-  const user = await User.findById(req.user?._id);
+  console.log(resetToken, newPassword);
 
-  const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+  const user = await User.findOne({resetToken});
 
-  if (!isPasswordCorrect) {
-    throw new ApiError(401, "Old password is incorrect");
+  if (!user) {
+    throw new ApiError(400, "Invalid reset token");
   }
 
   user.password = newPassword;
@@ -487,7 +487,7 @@ export {
   refreshToken,
   logoutUser,
   forgotPassword,
-  changeCurrentPassword,
+  resetPassword,
   getCurrentUser,
   updateAccountDetails,
   updateUserAvatar,
