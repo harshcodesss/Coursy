@@ -4,7 +4,7 @@ import { User } from "../models/user.models.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
-import { sendVerificationEmail } from "../utils/sendEmail.js";
+import { sendVerificationEmail, sendForgotPasswordEmail } from "../utils/sendEmail.js";
 import crypto from "crypto";
 
 const generateAccessAndRefreshToken = async (userId) => {
@@ -351,6 +351,55 @@ const refreshToken = asyncHandler(async (req, res) => {
   }
 });
 
+const forgotPassword = asyncHandler(async (req, res) => {
+  
+  const { email } = req.body;
+
+  if (!email) {
+    throw new ApiError(400, "Email is required");
+  }
+
+  const user = await User.findOne({ email });
+
+  // professional practice to prevent user enumeration
+  if (!user) {
+    return res.status(200).json({
+      success: true,
+      message: "Password reset link has been sent if the email is registered.",
+    });
+  }
+
+  try {
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    user.passwordResetToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+    
+    user.passwordResetExpires = Date.now() + 15 * 60 * 1000;
+
+    await user.save({ validateBeforeSave: false });
+
+    const resetUrl = `${process.env.CORS_ORIGIN || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+
+    await sendForgotPasswordEmail(user.email, resetUrl);
+
+    return res.status(200).json({
+      success: true,
+      message: "Password reset link has been sent to your email.",
+    });
+
+  } catch (err) {
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    console.error("FORGOT_PASSWORD_ERROR:", err);
+    throw new ApiError(500, "Failed to send password reset email. Please try again later.");
+  }
+});
+
 const changeCurrentPassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
 
@@ -437,6 +486,7 @@ export {
   resendOTP,
   refreshToken,
   logoutUser,
+  forgotPassword,
   changeCurrentPassword,
   getCurrentUser,
   updateAccountDetails,
