@@ -20,6 +20,10 @@ export default function Signup() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false); // Recommended: Loading state
 
+  const GOOGLE_AUTH_URL = `${
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+  }/api/users/auth/google`;
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -151,14 +155,15 @@ export default function Signup() {
           <div className="h-px w-full bg-slate-700"></div>
         </div>
 
-        <motion.button
+        <motion.a
+          href={GOOGLE_AUTH_URL}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           className="flex w-full items-center justify-center gap-3 rounded-md border border-slate-700 bg-slate-800 py-3 font-semibold text-white transition-all duration-300 hover:border-slate-500 hover:bg-slate-700"
         >
           <FcGoogle size={22} />
-          Sign up with Google
-        </motion.button>
+          Continue with Google
+        </motion.a>
 
         <p className="mt-8 text-center text-sm text-slate-400">
           Already have an account?{" "}
