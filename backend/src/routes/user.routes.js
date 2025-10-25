@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { registerUser, loginUser, verifyOTP, resendOTP, forgotPassword, resetPassword } from "../controllers/user.controllers.js";
+import { registerUser, loginUser, verifyOTP, resendOTP, forgotPassword, resetPassword, googleAuthCallback } from "../controllers/user.controllers.js";
 import { upload } from "../middlewares/multer.middlewares.js";
 import { verifyjWT } from "../middlewares/auth.middlewares.js";
 
@@ -31,5 +31,21 @@ router.route("/reset-password").post(resetPassword);
 
 // //file routes
 // router.route("/avatar").patch(verifyjWT,upload.single("avatar"),updateUserAvatar);
+
+
+// google auth routes
+router.route("/auth/google").get(
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+  })
+);
+
+router.route("/auth/google/callback").get(
+  passport.authenticate("google", {
+    failureRedirect: `${process.env.CORS_ORIGIN || 'http://localhost:3000'}/login-failure`, 
+    session: false, 
+  }),
+  googleAuthCallback 
+);
 
 export default router;

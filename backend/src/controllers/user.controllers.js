@@ -493,6 +493,38 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "Avatar updated successfully"));
 });
 
+
+const googleAuthCallback = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  if (!user) {
+    throw new ApiError(400, "Google authentication failed, user not found.");
+  }
+
+  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+    user._id
+  );
+
+  user.refreshToken = refreshToken;
+  await user.save({ validateBeforeSave: false });
+
+  const frontendUrl = process.env.CORS_ORIGIN || "http://localhost:3000";
+
+  const redirectUrl = `${frontendUrl}/auth-success?token=${accessToken}`;
+
+  const options = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .redirect(redirectUrl);
+});
+
+
 export {
   registerUser,
   loginUser,
@@ -505,4 +537,5 @@ export {
   getCurrentUser,
   updateAccountDetails,
   updateUserAvatar,
+  googleAuthCallback,
 };
