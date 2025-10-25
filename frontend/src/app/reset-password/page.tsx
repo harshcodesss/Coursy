@@ -180,7 +180,7 @@ export default function ResetPasswordPage() {
         </div>
 
         {success ? (
-          <div className="mt-8 text-center text-lg font-medium text-green-400">
+          <div className="mt-8 text-center text-lg font-medium text-white-400">
             {success}
           </div>
         ) : (

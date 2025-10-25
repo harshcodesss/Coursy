@@ -401,18 +401,32 @@ const forgotPassword = asyncHandler(async (req, res) => {
 });
 
 const resetPassword = asyncHandler(async (req, res) => {
-  const { resetToken, newPassword } = req.body;
+  const { token, password } = req.body;
 
-  console.log(resetToken, newPassword);
-
-  const user = await User.findOne({resetToken});
-
-  if (!user) {
-    throw new ApiError(400, "Invalid reset token");
+  if (!token || !password) {
+    throw new ApiError(400, "Token and new password are required");
   }
 
-  user.password = newPassword;
-  await user.save({ validateBeforeSave: false });
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(token)
+    .digest("hex");
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() }, 
+  });
+
+  if (!user) {
+    throw new ApiError(400, "Invalid or expired password reset token");
+  }
+
+  user.password = password;
+
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+
+  await user.save(); 
 
   return res
     .status(200)
