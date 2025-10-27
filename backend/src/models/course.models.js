@@ -1,24 +1,35 @@
+// /models/course.model.js
 import mongoose, { Schema } from "mongoose";
 
 const courseSchema = new Schema(
   {
-    title: {
-      type: String,
-      required: true,
-      trim: true,
+    title: { 
+      type: String, 
+      required: true, 
+      trim: true 
     },
     originalPrompt: { 
-        type: String, 
-        required: true 
+      type: String, 
+      required: true 
     },
     creator: { 
-        type: Schema.Types.ObjectId, 
-        ref: "User", 
-        required: true 
+      type: Schema.Types.ObjectId, 
+      ref: "User", 
+      required: true 
+    },
+    introduction: {
+      learningObjectives: {
+        type: String,
+        required: true,
+      },
+      syllabus: [{ 
+        type: String,
+        required: true,
+      }]
     },
     modules: [{ 
-        type: Schema.Types.ObjectId, 
-        ref: "Module" 
+      type: Schema.Types.ObjectId, 
+      ref: "Module" 
     }],
   },
   { timestamps: true },

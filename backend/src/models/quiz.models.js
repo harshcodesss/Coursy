@@ -13,11 +13,10 @@ const questionSchema = new Schema(
         required: true,
       },
     ],
-    correctAnswer: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+    correctAnswerIndex: {
+      type: Number,
+      required: true
+    }
   },
   { timestamps: true },
 );
