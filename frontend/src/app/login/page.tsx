@@ -45,6 +45,9 @@ export default function Login() {
       );
 
       const data = await res.json();
+
+      console.log(data);
+
       if (!res.ok) {
         throw new Error(data.message || "Login failed. Please check your credentials.");
       }
@@ -52,6 +55,7 @@ export default function Login() {
       // Redirect to home or dashboard on successful login
       router.push("/dashboard");
     } catch (err: any) {
+      console.log(err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -125,7 +129,7 @@ export default function Login() {
           </div>
 
 
-          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+          {error && <p className="text-red-500 text-sm text-center m-4">{error}</p>}
 
           <motion.button
             whileHover={{ scale: 1.02 }}
