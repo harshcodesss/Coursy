@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { registerUser, loginUser, verifyOTP, resendOTP, forgotPassword, resetPassword, googleAuthCallback } from "../controllers/user.controllers.js";
 import { upload } from "../middlewares/multer.middlewares.js";
-import { verifyjWT } from "../middlewares/auth.middlewares.js";
+import { verifyJWT } from "../middlewares/auth.middlewares.js";
 import passport from "passport";
 
 const router = Router();

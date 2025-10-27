@@ -12,6 +12,10 @@ const lessonSchema = new Schema(
       required: true, 
       trim: true 
     },
+    youtubeVideoQuery: {
+      type: String,
+      required: true,
+    },
     videoId: {
         type: String,
         required: true,
