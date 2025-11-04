@@ -13,23 +13,16 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/context/Usercontext";
-import { useEffect } from "react";
-
-interface SidebarProps {
-  courses?: string[];
-  suggestedCourses?: string[];
-  onNewChat?: () => void;
-  onCourseSelect?: (course: string) => void;
-  onSuggestedCourseSelect?: (course: string) => void;
-}
 
 export default function Sidebar({
-  courses = ["DSA in C++", "Web Development", "Machine Learning"],
-  suggestedCourses = ["AI for Beginners", "React Basics", "Database Systems"],
   onNewChat,
   onCourseSelect,
   onSuggestedCourseSelect,
-}: SidebarProps) {
+}: {
+  onNewChat?: () => void;
+  onCourseSelect?: (courseId: string) => void;
+  onSuggestedCourseSelect?: (course: string) => void;
+}) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [showCourses, setShowCourses] = useState(true);
   const [showSuggested, setShowSuggested] = useState(true);
@@ -37,10 +30,7 @@ export default function Sidebar({
 
   const { user, loading } = useUser();
 
-  // useEffect(() => {
-  //   console.log("🧩 Sidebar: User data loaded:", user);
-  //   console.log("🧩 Sidebar: Avatar path:", user?.avatar);
-  // }, [user]);
+  const suggestedCourses = ["AI for Beginners", "React Basics", "Database Systems"];
 
   const textVariants = {
     visible: {
@@ -54,9 +44,7 @@ export default function Sidebar({
 
   const getAnimateState = () => (isExpanded ? "visible" : "hidden");
 
-  const handleSettingsClick = () => {
-    router.push("/dashboard/settings");
-  };
+  const handleSettingsClick = () => router.push("/dashboard/settings");
 
   return (
     <div
@@ -77,7 +65,7 @@ export default function Sidebar({
 
         {/* New Course Button */}
         <button
-          onClick={onNewChat}
+          onClick={() => router.push("/dashboard")}
           className={`flex items-center gap-3 p-3 text-black font-semibold rounded-lg transition-all duration-300 ease-in-out
             bg-gradient-to-r from-teal-400 via-green-200 to-cyan-600 hover:opacity-90
             ${isExpanded ? "w-full" : "w-12 justify-center"}
@@ -93,9 +81,10 @@ export default function Sidebar({
             New Course
           </motion.span>
         </button>
+
       </div>
 
-      {/* --- Middle Section: Courses --- */}
+      {/* --- Middle Section --- */}
       <nav className="flex-1 mt-4 px-3 overflow-y-auto">
         <AnimatePresence>
           {isExpanded && (
@@ -105,7 +94,7 @@ export default function Sidebar({
               exit={{ opacity: 0, y: -10 }}
               className="flex flex-col space-y-3"
             >
-              {/* User Courses */}
+              {/* --- User Courses --- */}
               <div>
                 <button
                   onClick={() => setShowCourses(!showCourses)}
@@ -118,15 +107,8 @@ export default function Sidebar({
                   >
                     Your Courses
                   </motion.span>
-                  <motion.div
-                    variants={textVariants}
-                    animate={getAnimateState()}
-                  >
-                    {showCourses ? (
-                      <ChevronDown size={18} />
-                    ) : (
-                      <ChevronRight size={18} />
-                    )}
+                  <motion.div variants={textVariants} animate={getAnimateState()}>
+                    {showCourses ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                   </motion.div>
                 </button>
 
@@ -138,31 +120,29 @@ export default function Sidebar({
                       exit={{ height: 0, opacity: 0 }}
                       className="overflow-hidden"
                     >
-                      {courses.length > 0 ? (
-                        courses.map((course, index) => (
+                      {user?.courses && user.courses.length > 0 ? (
+                        user.courses.map((course) => (
                           <button
-                            key={index}
-                            onClick={() => onCourseSelect?.(course)}
+                            key={course._id}
+                            onClick={() => onCourseSelect?.(course._id)}
                             className="w-full flex items-center gap-3 p-2 pl-4 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-lg text-left transition-colors"
-                            title={course}
+                            title={course.title}
                           >
                             <MessageSquare size={16} />
                             <span className="truncate whitespace-nowrap text-sm">
-                              {course}
+                              {course.title}
                             </span>
                           </button>
                         ))
                       ) : (
-                        <p className="px-4 py-2 text-sm text-neutral-500">
-                          No courses yet
-                        </p>
+                        <p className="px-4 py-2 text-sm text-neutral-500">No courses yet</p>
                       )}
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
 
-              {/* Suggested Courses */}
+              {/* --- Suggested Courses --- */}
               <div>
                 <button
                   onClick={() => setShowSuggested(!showSuggested)}
@@ -175,15 +155,8 @@ export default function Sidebar({
                   >
                     Suggested Courses
                   </motion.span>
-                  <motion.div
-                    variants={textVariants}
-                    animate={getAnimateState()}
-                  >
-                    {showSuggested ? (
-                      <ChevronDown size={18} />
-                    ) : (
-                      <ChevronRight size={18} />
-                    )}
+                  <motion.div variants={textVariants} animate={getAnimateState()}>
+                    {showSuggested ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                   </motion.div>
                 </button>
 
@@ -195,25 +168,17 @@ export default function Sidebar({
                       exit={{ height: 0, opacity: 0 }}
                       className="overflow-hidden"
                     >
-                      {suggestedCourses.length > 0 ? (
-                        suggestedCourses.map((course, index) => (
-                          <button
-                            key={index}
-                            onClick={() => onSuggestedCourseSelect?.(course)}
-                            className="w-full flex items-center gap-3 p-2 pl-4 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-lg text-left transition-colors"
-                            title={course}
-                          >
-                            <BookOpen size={16} />
-                            <span className="truncate whitespace-nowrap text-sm">
-                              {course}
-                            </span>
-                          </button>
-                        ))
-                      ) : (
-                        <p className="px-4 py-2 text-sm text-neutral-500">
-                          No suggested courses
-                        </p>
-                      )}
+                      {suggestedCourses.map((course, index) => (
+                        <button
+                          key={index}
+                          onClick={() => onSuggestedCourseSelect?.(course)}
+                          className="w-full flex items-center gap-3 p-2 pl-4 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-lg text-left transition-colors"
+                          title={course}
+                        >
+                          <BookOpen size={16} />
+                          <span className="truncate whitespace-nowrap text-sm">{course}</span>
+                        </button>
+                      ))}
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -223,7 +188,9 @@ export default function Sidebar({
         </AnimatePresence>
       </nav>
 
+      {/* --- Bottom Section --- */}
       <div className="flex-shrink-0 p-4 border-t border-neutral-800 space-y-3">
+        {/* Settings Button */}
         <button
           onClick={handleSettingsClick}
           className={`flex items-center gap-3 p-3 hover:bg-neutral-800 rounded-lg text-neutral-300 transition-colors ${
@@ -232,15 +199,12 @@ export default function Sidebar({
           title="Settings"
         >
           <Settings size={20} />
-          <motion.span
-            variants={textVariants}
-            animate={getAnimateState()}
-            className="whitespace-nowrap"
-          >
+          <motion.span variants={textVariants} animate={getAnimateState()}>
             Settings
           </motion.span>
         </button>
 
+        {/* User Info */}
         <div
           className={`flex items-center gap-3 p-2 hover:bg-neutral-800 rounded-lg ${
             !isExpanded && "justify-center"

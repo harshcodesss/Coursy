@@ -117,10 +117,6 @@ const getYouTubeVideoId = async (query) => {
   }
 };
 
-
-// =================================================================
-// MAIN CONTROLLER: generateCourse
-// =================================================================
 export const generateCourse = asyncHandler(async (req, res) => {
   
   const { prompt } = req.body;
@@ -273,3 +269,36 @@ export const getCourseDetails = asyncHandler(async (req, res) => {
         new ApiResponse(200, course, "Course details fetched successfully")
       );
   });
+
+
+export const getCourseById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const course = await Course.findById(id)
+      .populate({
+        path: "modules",
+        populate: [
+          { path: "lessons" },
+          { path: "quiz" },
+        ],
+      })
+      .populate("creator", "fullname email");
+
+    if (!course) {
+      return res.status(404).json({ success: false, message: "Course not found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: { course },
+      message: "Course fetched successfully",
+    });
+  } catch (error) {
+    console.error("Error fetching course:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch course",
+    });
+  }
+};

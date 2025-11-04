@@ -2,11 +2,17 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
+interface Course {
+  _id: string;
+  title: string;
+}
+
 interface User {
   _id: string;
   fullname: string;
   email: string;
   avatar?: string;
+  courses?: Course[];
 }
 
 interface UserContextType {

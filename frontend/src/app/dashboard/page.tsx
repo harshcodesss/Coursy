@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { PromptBox } from "@/components/layout/prompt";
 import { ExampleCard } from "@/components/layout/card";
-import Sidebar from "@/components/layout/sidebar";
 import { useUser } from "@/context/Usercontext";
 
 export default function DashboardPage() {
@@ -12,6 +11,44 @@ export default function DashboardPage() {
   const [prompt, setPrompt] = useState("");
   const [loadingPrompt, setLoadingPrompt] = useState(false);
   const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!prompt) return;
+
+    setLoadingPrompt(true);
+    console.log("Submitting prompt:", prompt);
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/courses/generate`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ prompt }),
+        }
+      );
+
+      const data = await res.json();
+      console.log("Backend response:", data);
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to generate course");
+      }
+
+      const newCourseId = data.data.courseId || data.data._id;
+      console.log("✅ Course created! Redirecting to:", newCourseId);
+      router.push(`/dashboard/course/${newCourseId}`);
+    } catch (err) {
+      console.error("❌ Error generating course:", err);
+      alert("Failed to generate course. Try again later.");
+    } finally {
+      setLoadingPrompt(false);
+    }
+  };
 
   const examplePrompts = [
     {
@@ -44,42 +81,6 @@ export default function DashboardPage() {
     setPrompt(selectedPrompt);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!prompt) return;
-
-    setLoadingPrompt(true);
-    console.log("Submitting prompt:", prompt);
-
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/courses/generate`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include", // for httpOnly cookie sessions
-          body: JSON.stringify({ prompt }),
-        }
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to generate course");
-      }
-
-      const newCourseId = data.data.courseId;
-      console.log("Course created! Redirecting to:", newCourseId);
-      router.push(`/dashboard/course/${newCourseId}`);
-    } catch (err: any) {
-      console.error(err);
-      setLoadingPrompt(false);
-    }
-  };
-
-  // ✅ Handle loading & redirect if not logged in
   useEffect(() => {
     if (!loading && !user) {
       router.push("/login");
@@ -94,11 +95,10 @@ export default function DashboardPage() {
     );
   }
 
-  if (!user) return null; 
+  if (!user) return null;
 
   return (
     <div className="flex h-screen bg-black text-white">
-      <Sidebar />
 
       <main className="flex-1 overflow-y-auto flex flex-col justify-center mx-auto max-w-4xl p-4 md:p-8 lg:p-12">
         <div className="flex flex-col items-center w-full">
@@ -112,6 +112,7 @@ export default function DashboardPage() {
             What amazing course will you create today?
           </p>
 
+          {/* 🔹 Prompt Input */}
           <div className="w-full mt-10">
             <PromptBox
               prompt={prompt}
@@ -121,6 +122,7 @@ export default function DashboardPage() {
             />
           </div>
 
+          {/* 🔹 Example Prompts */}
           <div className="mt-16 w-full">
             <h2 className="text-xl font-semibold text-white">
               Start with an example
