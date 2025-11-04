@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { registerUser, loginUser, verifyOTP, resendOTP, forgotPassword, resetPassword, googleAuthCallback } from "../controllers/user.controllers.js";
+import { registerUser, loginUser, verifyOTP, resendOTP, forgotPassword, resetPassword, googleAuthCallback, getCurrentUser } from "../controllers/user.controllers.js";
 import { upload } from "../middlewares/multer.middlewares.js";
 import { verifyJWT } from "../middlewares/auth.middlewares.js";
 import passport from "passport";
@@ -18,6 +18,8 @@ router.route("/login").post(loginUser);
 
 router.route("/forgot-password").post(forgotPassword);
 router.route("/reset-password").post(resetPassword);
+
+router.route("/me").get(verifyJWT, getCurrentUser);
 
 // router.route("/refresh-token").post(refreshToken);
 
