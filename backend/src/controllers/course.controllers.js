@@ -215,13 +215,19 @@ export const generateCourse = asyncHandler(async (req, res) => {
 
     newCourse.modules = savedModuleIds;
     await newCourse.save({ session });
-    
-    // If all steps succeeded, commit the transaction
+
+    // bug fixed : update user's course list
+    await User.findByIdAndUpdate(
+      user._id,
+      { $push: { courses: newCourse._id } },
+      { session }
+    );
+
     await session.commitTransaction();
 
     // --- 5. Send the Final Response ---
     return res
-      .status(201) // 201 Created is the correct code
+      .status(201)
       .json(new ApiResponse(
         201, 
         { courseId: newCourse._id }, 
@@ -229,7 +235,6 @@ export const generateCourse = asyncHandler(async (req, res) => {
       ));
 
   } catch (error) {
-    // If anything failed, abort the entire transaction
     await session.abortTransaction();
     console.error("Course Generation Transaction Failed:", error);
     throw new ApiError(500, `Course creation failed: ${error.message}`);

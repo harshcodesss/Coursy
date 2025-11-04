@@ -434,13 +434,16 @@ const resetPassword = asyncHandler(async (req, res) => {
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
-
-  console.log("req.user", req.user);
-
-  return res
-  .status(200)
-  .json(new ApiResponse(200, { user: req.user }, "User found successfully"));
-});
+    const user = await User.findById(req.user._id)
+      .select("-password -refreshToken")
+      .populate("courses", "title"); 
+  
+    if (!user) throw new ApiError(404, "User not found");
+  
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { user }, "User found successfully"));
+  });
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
   const { fullname, email } = req.body;
