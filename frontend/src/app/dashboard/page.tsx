@@ -6,6 +6,8 @@ import { PromptBox } from "@/components/layout/prompt";
 import { ExampleCard } from "@/components/layout/card";
 import { useUser } from "@/context/Usercontext";
 
+import LoadingOverlay from "@/components/ui/LoadingOverlay";
+
 export default function DashboardPage() {
   const { user, loading } = useUser();
   const [prompt, setPrompt] = useState("");
@@ -140,6 +142,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+      {loadingPrompt && <LoadingOverlay message="✨ Generating your course..." />}
     </div>
   );
 }
