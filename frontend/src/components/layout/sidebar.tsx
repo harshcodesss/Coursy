@@ -44,7 +44,7 @@ export default function Sidebar({
 
   const getAnimateState = () => (isExpanded ? "visible" : "hidden");
 
-  const handleSettingsClick = () => router.push("/dashboard/settings");
+  const handleSettingsClick = () => router.push("/settings");
 
   return (
     <div
