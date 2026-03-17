@@ -12,88 +12,98 @@ import mongoose from "mongoose";
 
 // --- API Initialization ---
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const geminiModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash-preview-09-2025" });
+const geminiModel = genAI.getGenerativeModel({
+  model: "gemini-2.5-flash",
+  generationConfig: {
+    responseMimeType: "application/json",
+  },
+});
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
-// =================================================================
 // HELPER 1: The Gemini Prompt "Brain"
 // This defines the exact JSON structure for the model.
-// =================================================================
-const getSystemPrompt = (userPrompt) => `
-You are an expert curriculum designer named "Coursy". Your task is to generate a complete, high-quality course based on the user's request.
 
-You MUST return the output in a single, valid JSON object. Do not add any text, markdown, or "json" tags before or after the JSON block.
+export const getSystemPrompt = (userPrompt) => `
+You are Coursy — an expert curriculum designer.
 
-User's Request: "${userPrompt}"
+RESPONSE RULES (MUST FOLLOW):
+1. Return ONLY a single valid JSON object. Do NOT include any explanation, text, or markdown before or after the JSON. Do NOT include code fences such as three backticks.
+2. Ensure all keys and all string values use double quotes. The output must be parseable by JSON.parse().
+3. Do not include extra keys beyond the schema below.
+4. Do not include null values. Do not use comments.
+5. Arrays must meet the minimum sizes requested below.
+6. "correctAnswerIndex" must be a valid integer index within the question's options array (0-based).
 
-Generate the course adhering to this exact JSON schema:
-
+SCHEMA (exactly; keep types):
 {
-  "title": "Full Course Title (e.g., Ultimate Beginner's Guide to Python)",
+  "title": "string",
   "introduction": {
-    "learningObjectives": "A paragraph explaining what the user will learn by the end of this course.",
-    "syllabus": [
-      "A bullet point of the first main topic",
-      "A bullet point of the second main topic",
-      "..."
-    ]
+    "learningObjectives": "string",
+    "syllabus": ["string", "..."]
   },
   "modules": [
     {
-      "title": "Module 1: The Basics",
-      "reading": "The general introductory text reading for this module. This should be a few paragraphs.",
+      "title": "string",
+      "reading": "string",
       "lessons": [
         {
-          "title": "Lesson 1.1: Setting up Your Environment",
-          "content": "The text content for this lesson. This will be used as the video transcript.",
-          "youtubeVideoQuery": "A concise, 5-10 word YouTube search query for this specific lesson (e.g., 'how to install python on windows')"
-        },
-        {
-          "title": "Lesson 1.2: Your First Program",
-          "content": "Text content for lesson 1.2...",
-          "youtubeVideoQuery": "python hello world tutorial for beginners"
+          "title": "string",
+          "content": "string",
+          "youtubeVideoQuery": "string"
         }
       ],
       "quiz": {
-        "title": "Module 1 Quiz",
+        "title": "string",
         "questions": [
           {
-            "question": "What keyword is used to declare a variable in Python?",
-            "options": ["var", "let", "const", "No keyword is needed"],
-            "correctAnswerIndex": 3
-          }
-        ]
-      }
-    },
-    {
-      "title": "Module 2: Data Types",
-      "reading": "General text reading for Module 2...",
-      "lessons": [
-        {
-          "title": "Lesson 2.1: Strings and Numbers",
-          "content": "Text content for lesson 2.1...",
-          "youtubeVideoQuery": "python strings and numbers tutorial"
-        }
-      ],
-      "quiz": {
-        "title": "Module 2 Quiz",
-        "questions": [
-          {
-            "question": "What is the data type of '10'?",
-            "options": ["Integer", "String", "Float"],
-            "correctAnswerIndex": 1
+            "question": "string",
+            "options": ["string", "string", "..."],
+            "correctAnswerIndex": number
           }
         ]
       }
     }
   ]
 }
+
+CONTENT RULES (required):
+- Generate at least 2 modules.
+- Each module must have at least 2 lessons.
+- Each module's quiz must contain at least 3 questions.
+- Each question must have at least 2 options.
+- Keep lesson "content" concise but full sentences suitable for a video transcript (1–3 paragraphs).
+- Keep youtubeVideoQuery short (5–10 words) and specific to the lesson.
+- Syllabus must be an array of short strings (3–8 items recommended).
+
+User request: "${userPrompt}"
+
+Produce the JSON course for this request now.
 `;
 
-// =================================================================
+export const parseGeneratedJSON = (rawText) => {
+  if (!rawText || typeof rawText !== "string") {
+    throw new Error("Empty response from model");
+  }
+
+  let cleaned = rawText.replace(/```[\s\S]*?```/g, "").trim();
+
+  const jsonMatch = cleaned.match(/(\{[\s\S]*\})/);
+  const candidate = jsonMatch ? jsonMatch[1] : cleaned;
+
+  const finalText = candidate.trim();
+
+  try {
+    return JSON.parse(finalText);
+  } catch (err) {
+    console.error("Failed to parse JSON from model. Raw cleaned text:", cleaned);
+    throw new Error("The model returned an invalid JSON format.");
+  }
+};
+
+
 // HELPER 2: YouTube API Search
 // This finds the top video for a given query.
-// =================================================================
+
 const getYouTubeVideoId = async (query) => {
   try {
     const url = `https://www.googleapis.com/youtube/v3/search`;
@@ -139,9 +149,9 @@ export const generateCourse = asyncHandler(async (req, res) => {
 
   let generatedCourse;
   try {
-    generatedCourse = JSON.parse(geminiText);
-  } catch (e) {
-    console.error("Gemini output was not valid JSON:", geminiText);
+    generatedCourse = parseGeneratedJSON(geminiText);
+  } catch (err) {
+    console.error("Invalid JSON from Gemini:", err);
     throw new ApiError(500, "The model returned an invalid format. Please try again.");
   }
 

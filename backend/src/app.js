@@ -31,11 +31,13 @@ app.use(passport.initialize());
 import userRouter from "./routes/user.routes.js"
 import healthRouter from "./routes/healthcheck.routes.js"
 import courseRouter from "./routes/course.routes.js"
+import quizRouter from "./routes/quiz.routes.js"
 
 //routes
 app.use("/api/healthcheck",healthRouter)
 app.use("/api/users",userRouter)
 app.use("/api/courses",courseRouter)
+app.use("/api/quiz",quizRouter)
 
 
 app.use((err, req, res, next) => {

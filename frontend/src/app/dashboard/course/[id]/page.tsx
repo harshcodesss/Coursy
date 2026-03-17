@@ -18,7 +18,8 @@ interface Course {
 }
 
 export default function CoursePage() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params.id as string; 
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0); // percentage tracker
@@ -122,6 +123,7 @@ export default function CoursePage() {
               key={module._id || index}
               module={module}
               index={index + 1}
+              courseId={id}
             />
           ))
         ) : (

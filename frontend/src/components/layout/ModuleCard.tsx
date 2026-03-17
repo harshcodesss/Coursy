@@ -2,11 +2,28 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronRight, BookOpen, Play, ClipboardCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
+
+import {
+  ChevronDown,
+  ChevronRight,
+  BookOpen,
+  Play,
+  ClipboardCheck,
+} from "lucide-react";
 import LessonCard from "./LessonCard";
 
-export default function ModuleCard({ module, index }: { module: any; index: number }) {
+export default function ModuleCard({
+  module,
+  index,
+  courseId,
+}: {
+  module: any;
+  index: number;
+  courseId: string;
+}) {
   const [expanded, setExpanded] = useState(false);
+  const router = useRouter(); 
 
   return (
     <div className="mb-4 border border-neutral-800 rounded-lg bg-neutral-900">
@@ -56,7 +73,14 @@ export default function ModuleCard({ module, index }: { module: any; index: numb
               <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
                 <ClipboardCheck size={16} /> Quiz
               </h3>
-              <button className="px-4 py-2 bg-gradient-to-r from-teal-400 to-cyan-600 rounded-lg text-black font-semibold hover:opacity-90">
+              <button
+                onClick={() =>
+                  router.push(
+                    `/dashboard/course/${courseId}/quiz?moduleId=${module._id}`
+                  )
+                }
+                className="px-4 py-2 bg-gradient-to-r from-teal-400 to-cyan-600 rounded-lg text-black font-semibold hover:opacity-90"
+              >
                 Start Quiz
               </button>
             </div>
