@@ -20,40 +20,40 @@ export default function DashboardPage() {
     setLoadingPrompt(true);
     console.log("Submitting prompt:", prompt);
 
-    setTimeout( () =>{
-      setLoadingPrompt(false);
-    },5000);
+    // setTimeout( () =>{
+    //   setLoadingPrompt(false);
+    // },5000);
     
 
-    // try {
-    //   const res = await fetch(
-    //     `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/courses/generate`,
-    //     {
-    //       method: "POST",
-    //       headers: {
-    //         "Content-Type": "application/json",
-    //       },
-    //       credentials: "include",
-    //       body: JSON.stringify({ prompt }),
-    //     }
-    //   );
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/courses/generate`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ prompt }),
+        }
+      );
 
-    //   const data = await res.json();
-    //   console.log("Backend response:", data);
+      const data = await res.json();
+      console.log("Backend response:", data);
 
-    //   if (!res.ok) {
-    //     throw new Error(data.message || "Failed to generate course");
-    //   }
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to generate course");
+      }
 
-    //   const newCourseId = data.data.courseId || data.data._id;
-    //   console.log("✅ Course created! Redirecting to:", newCourseId);
-    //   router.push(`/dashboard/course/${newCourseId}`);
-    // } catch (err) {
-    //   console.error("❌ Error generating course:", err);
-    //   alert("Failed to generate course. Try again later.");
-    // } finally {
-    //   setLoadingPrompt(false);
-    // }
+      const newCourseId = data.data.courseId || data.data._id;
+      console.log("✅ Course created! Redirecting to:", newCourseId);
+      router.push(`/dashboard/course/${newCourseId}`);
+    } catch (err) {
+      console.error("❌ Error generating course:", err);
+      alert("Failed to generate course. Try again later.");
+    } finally {
+      setLoadingPrompt(false);
+    }
   };
 
   const examplePrompts = [
