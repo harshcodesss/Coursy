@@ -16,14 +16,23 @@ export const ExampleCard = ({
   return (
     <motion.button
       onClick={onSelect}
-      whileHover={{ y: -5, boxShadow: "0px 10px 20px rgba(0, 255, 255, 0.1)" }}
-      className="flex h-full w-full flex-col justify-between rounded-lg border border-slate-700 bg-slate-800/50 p-4 text-left transition-all hover:border-teal-500"
+      whileHover={{ y: -4 }}
+      className="group flex h-full w-full flex-col justify-between rounded-2xl border border-zinc-700/80 bg-zinc-800/40 p-5 text-left transition-colors duration-300 hover:border-white hover:bg-white hover:shadow-xl hover:shadow-white/5"
     >
       <div>
-        <h3 className="font-semibold text-white">{title}</h3>
-        <p className="mt-2 text-sm text-slate-400">{description}</p>
+        <h3 className="font-semibold text-zinc-100 transition-colors duration-300 group-hover:text-zinc-900">
+          {title}
+        </h3>
+        
+        <p className="mt-2 text-sm text-zinc-400 transition-colors duration-300 group-hover:text-zinc-600">
+          {description}
+        </p>
       </div>
-      <ArrowRight size={16} className="mt-4 self-end text-slate-500" />
+
+      <ArrowRight 
+        size={18} 
+        className="mt-4 self-end text-zinc-500 transition-colors duration-300 group-hover:text-zinc-900" 
+      />
     </motion.button>
   );
 };

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { PromptBox } from "@/components/layout/prompt";
 import { ExampleCard } from "@/components/layout/card";
 import { useUser } from "@/context/Usercontext";
+import LayoutTextFlipDemo from "@/components/ui/dashInputText";
 
 export default function DashboardPage() {
   const { user, loading } = useUser();
@@ -107,15 +108,8 @@ export default function DashboardPage() {
 
       <main className="flex-1 overflow-y-auto flex flex-col justify-center mx-auto max-w-4xl p-4 md:p-8 lg:p-12">
         <div className="flex flex-col items-center w-full">
-          <h1 className="text-4xl md:text-5xl font-bold text-center">
-            Hello,{" "}
-            <span className="bg-gradient-to-r from-teal-400 via-green-200 to-cyan-600 bg-clip-text text-transparent">
-              {user?.fullname?.split(" ")[0] || "Creator"}
-            </span>
-          </h1>
-          <p className="mt-4 text-lg md:text-xl text-slate-300 text-center">
-            What amazing course will you create today?
-          </p>
+
+          <LayoutTextFlipDemo userName={user?.fullname?.split(" ")[0] || "Creator"} />
 
           {/* PROMPT INPUT BOX */}
 
