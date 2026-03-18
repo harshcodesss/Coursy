@@ -40,31 +40,34 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
             credentials: "include",
           }
         );
+        
         const data = await res.json();
 
-        console.log(data);
-
-        if (res.ok) {
-          const userData = data?.data?.user || data?.user;
-
-          // ✅ Fallback avatar logic
-          const finalUser = userData
-            ? {
-                ...userData,
-                avatar:
-                  userData.avatar && userData.avatar.trim() !== ""
-                    ? userData.avatar
-                    : "/avatarLocal.jpg", // Path inside /public
-              }
-            : null;
-
-          console.log("User fetched:", finalUser);
-          setUser(finalUser);
-        } else {
+        if (!res.ok) {
+          if (res.status === 401 || data.message === "jwt expired") {
+            localStorage.removeItem("token");
+            setUser(null);
+            window.location.href = "/login";
+            return;
+          }
           setUser(null);
+          return;
         }
+
+        const userData = data?.data?.user || data?.user;
+
+        const finalUser = userData
+          ? {
+              ...userData,
+              avatar:
+                userData.avatar && userData.avatar.trim() !== ""
+                  ? userData.avatar
+                  : "/avatarLocal.jpg",
+            }
+          : null;
+
+        setUser(finalUser);
       } catch (err) {
-        console.error("Error fetching user:", err);
         setUser(null);
       } finally {
         setLoading(false);
