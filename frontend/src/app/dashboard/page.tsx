@@ -6,8 +6,6 @@ import { PromptBox } from "@/components/layout/prompt";
 import { ExampleCard } from "@/components/layout/card";
 import { useUser } from "@/context/Usercontext";
 
-import LoadingOverlay from "@/components/ui/LoadingOverlay";
-
 export default function DashboardPage() {
   const { user, loading } = useUser();
   const [prompt, setPrompt] = useState("");
@@ -21,35 +19,40 @@ export default function DashboardPage() {
     setLoadingPrompt(true);
     console.log("Submitting prompt:", prompt);
 
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/courses/generate`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({ prompt }),
-        }
-      );
-
-      const data = await res.json();
-      console.log("Backend response:", data);
-
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to generate course");
-      }
-
-      const newCourseId = data.data.courseId || data.data._id;
-      console.log("✅ Course created! Redirecting to:", newCourseId);
-      router.push(`/dashboard/course/${newCourseId}`);
-    } catch (err) {
-      console.error("❌ Error generating course:", err);
-      alert("Failed to generate course. Try again later.");
-    } finally {
+    setTimeout( () =>{
       setLoadingPrompt(false);
-    }
+    },5000);
+    
+
+    // try {
+    //   const res = await fetch(
+    //     `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/courses/generate`,
+    //     {
+    //       method: "POST",
+    //       headers: {
+    //         "Content-Type": "application/json",
+    //       },
+    //       credentials: "include",
+    //       body: JSON.stringify({ prompt }),
+    //     }
+    //   );
+
+    //   const data = await res.json();
+    //   console.log("Backend response:", data);
+
+    //   if (!res.ok) {
+    //     throw new Error(data.message || "Failed to generate course");
+    //   }
+
+    //   const newCourseId = data.data.courseId || data.data._id;
+    //   console.log("✅ Course created! Redirecting to:", newCourseId);
+    //   router.push(`/dashboard/course/${newCourseId}`);
+    // } catch (err) {
+    //   console.error("❌ Error generating course:", err);
+    //   alert("Failed to generate course. Try again later.");
+    // } finally {
+    //   setLoadingPrompt(false);
+    // }
   };
 
   const examplePrompts = [
@@ -114,7 +117,8 @@ export default function DashboardPage() {
             What amazing course will you create today?
           </p>
 
-          {/* 🔹 Prompt Input */}
+          {/* PROMPT INPUT BOX */}
+
           <div className="w-full mt-10">
             <PromptBox
               prompt={prompt}
@@ -124,7 +128,6 @@ export default function DashboardPage() {
             />
           </div>
 
-          {/* 🔹 Example Prompts */}
           <div className="mt-16 w-full">
             <h2 className="text-xl font-semibold text-white">
               Start with an example
@@ -142,7 +145,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
-      {loadingPrompt && <LoadingOverlay message="✨ Generating your course..." />}
     </div>
   );
 }
