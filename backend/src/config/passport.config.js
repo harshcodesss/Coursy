@@ -1,6 +1,6 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { User } from "../models/user.models.js"; // Using your provided path
+import { User } from "../models/user.models.js"; 
 import crypto from "crypto";
 
 passport.use(
@@ -8,10 +8,8 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: `${
-        process.env.API_BASE_URL || "http://localhost:8000"
-      }/api/users/auth/google/callback`,
-      scope: ["profile", "email"],
+      callbackURL: process.env.GOOGLE_CALLBACK_URL || "http://localhost:8000/api/users/auth/google/callback",
+      proxy: true, 
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -40,4 +38,3 @@ passport.use(
     }
   )
 );
-
