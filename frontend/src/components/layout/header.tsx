@@ -25,14 +25,11 @@ export default function Header() {
 
   return (
     <Navbar className="mt-5">
-      {/* Desktop Nav */}
       <NavBody>
         <NavbarLogo />
 
-        {/* Center links */}
         <NavItems items={navLinks} />
 
-        {/* Right side: only Get Started button */}
         <div className="flex items-center gap-4">
           <NavbarButton
             href="/signup"
@@ -44,7 +41,6 @@ export default function Header() {
         </div>
       </NavBody>
 
-      {/* Mobile Nav */}
       <MobileNav>
         <MobileNavHeader>
           <NavbarLogo />
@@ -66,7 +62,6 @@ export default function Header() {
             </a>
           ))}
 
-          {/* Only Get Started button inside mobile menu */}
           <div className="mt-4 flex w-full flex-col gap-3">
             <NavbarButton
               href="/signup"

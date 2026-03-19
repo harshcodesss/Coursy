@@ -1,12 +1,13 @@
 "use client";
 import React from "react";
-import { motion } from "motion/react";
+import { motion } from "framer-motion"; // or "motion/react" if you prefer
 import { Spotlight } from "@/components/ui/spotlight-new";
 import { Button } from "@/components/ui/button";
 
 export default function HeroSection() {
   return (
-    <section className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden bg-background text-foreground px-6">
+    // Replaced min-h-screen with pt-40 pb-16 to close the gap
+    <section className="relative flex flex-col items-center justify-center pt-40 pb-16 md:pt-48 md:pb-24 overflow-hidden bg-background text-foreground px-6">
       {/* Animated spotlight background */}
       <Spotlight />
 
@@ -40,7 +41,7 @@ export default function HeroSection() {
         </div>
       </motion.div>
 
-      {/* Gradient overlay (optional aesthetic touch) */}
+      {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent pointer-events-none" />
     </section>
   );

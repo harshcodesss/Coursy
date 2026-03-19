@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { User, Lock, Save, LogOut, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -12,17 +12,27 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
   const router = useRouter();
 
-  const { setUser } = useUser();
+  const { user, setUser } = useUser();
 
   const [profile, setProfile] = useState({
-    fullName: "Harsh Rathi",
-    email: "harsh@example.com",
+    fullName: "",
+    email: "",
   });
+  
   const [passwords, setPasswords] = useState({
     current: "",
     new: "",
     confirm: "",
   });
+
+  useEffect(() => {
+    if (user) {
+      setProfile({
+        fullName: user.fullname || "",
+        email: user.email || "",
+      });
+    }
+  }, [user]);
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setProfile({ ...profile, [e.target.name]: e.target.value });
@@ -32,22 +42,22 @@ export default function SettingsPage() {
     setPasswords({ ...passwords, [e.target.name]: e.target.value });
   };
 
-const handleLogout = async () => {
-  try {
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/users/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
-  
-    setUser(null);
-    window.location.href = "/";
+  const handleLogout = async () => {
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/users/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
     
-  } catch (error) {
-    console.error("Logout failed:", error);
-    setUser(null);
-    window.location.href = "/";
-  }
-};
+      setUser(null);
+      window.location.href = "/";
+      
+    } catch (error) {
+      console.error("Logout failed:", error);
+      setUser(null);
+      window.location.href = "/";
+    }
+  };
 
   const TabButton = ({
     id,
@@ -62,8 +72,8 @@ const handleLogout = async () => {
       onClick={() => setActiveTab(id)}
       className={`flex items-center gap-3 px-4 py-3 w-full text-left rounded-lg transition-colors ${
         activeTab === id
-          ? "bg-neutral-800 text-white"
-          : "text-neutral-400 hover:bg-neutral-800/50 hover:text-white"
+          ? "bg-zinc-800 text-white"
+          : "text-zinc-400 hover:bg-zinc-800/50 hover:text-white"
       }`}
     >
       <Icon size={18} />
@@ -82,20 +92,17 @@ const handleLogout = async () => {
     children: React.ReactNode;
     footer: React.ReactNode;
   }) => (
-    <div className="bg-neutral-900 border border-neutral-800 rounded-lg shadow-sm">
-      {/* Header */}
-      <div className="p-6 border-b border-neutral-800">
+    <div className="bg-zinc-900/40 border border-zinc-800/50 rounded-2xl shadow-sm overflow-hidden">
+      <div className="p-6 border-b border-zinc-800/50">
         <h2 className="text-xl font-semibold text-white">{title}</h2>
-        <p className="mt-1 text-sm text-neutral-400">{description}</p>
+        <p className="mt-1 text-sm text-zinc-400">{description}</p>
       </div>
 
-      {/* Body */}
       <div className="p-6 space-y-4">
         {children}
       </div>
 
-      {/* Footer */}
-      <div className="px-6 py-4 bg-neutral-900/50 border-t border-neutral-800 text-right rounded-b-lg">
+      <div className="px-6 py-4 bg-zinc-950/50 border-t border-zinc-800/50 text-right">
         {footer}
       </div>
     </div>
@@ -117,7 +124,7 @@ const handleLogout = async () => {
     disabled?: boolean;
   }) => (
     <div>
-      <label htmlFor={name} className="block text-sm font-medium text-neutral-300">
+      <label htmlFor={name} className="block text-sm font-medium text-zinc-300">
         {label}
       </label>
       <input
@@ -127,63 +134,65 @@ const handleLogout = async () => {
         value={value}
         onChange={onChange}
         disabled={disabled}
-        className="mt-1 block w-full px-3 py-2 bg-neutral-800 border border-neutral-700 rounded-md shadow-sm text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="mt-1 block w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg shadow-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm disabled:opacity-50"
       />
     </div>
   );
 
-  // --- Tab Content Components ---
+  const ProfileSettings = () => {
+    const initial = user?.fullname ? user.fullname.charAt(0).toUpperCase() : "U";
 
-  const ProfileSettings = () => (
-    <SettingsCard
-      title="Profile"
-      description="This information will be displayed publicly."
-      footer={
-        <button className="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black transition-colors disabled:opacity-50">
-          <Save size={16} className="inline-block mr-2 -mt-1" />
-          Save Changes
-        </button>
-      }
-    >
-      <InputField
-        label="Full Name"
-        name="fullName"
-        type="text"
-        value={profile.fullName}
-        onChange={handleProfileChange}
-      />
-      <InputField
-        label="Email Address"
-        name="email"
-        type="email"
-        value={profile.email}
-        onChange={() => {}} // Usually email is not changeable
-        disabled
-      />
-      <div>
-        <label className="block text-sm font-medium text-neutral-300">
-          Avatar
-        </label>
-        <div className="mt-1 flex items-center gap-4">
-          <img
-            src="https://placehold.co/48x48/000000/FFFFFF?text=H"
-            alt="User avatar"
-            className="rounded-full"
-          />
-          <button className="px-4 py-1.5 border border-neutral-700 text-sm font-medium rounded-md hover:bg-neutral-800">
-            Change
+    return (
+      <SettingsCard
+        title="Profile"
+        description="This information will be displayed publicly."
+        footer={
+          <button className="px-5 py-2 bg-white text-black text-sm font-semibold rounded-lg hover:bg-zinc-200 transition-colors disabled:opacity-50">
+            <Save size={16} className="inline-block mr-2 -mt-1" />
+            Save Changes
           </button>
+        }
+      >
+        <InputField
+          label="Full Name"
+          name="fullName"
+          type="text"
+          value={profile.fullName}
+          onChange={handleProfileChange}
+        />
+        <InputField
+          label="Email Address"
+          name="email"
+          type="email"
+          value={profile.email}
+          onChange={() => {}} 
+          disabled
+        />
+        <div>
+          <label className="block text-sm font-medium text-zinc-300">
+            Avatar
+          </label>
+          <div className="mt-2 flex items-center gap-4">
+            <img
+              src={user?.avatar || `https://placehold.co/48x48/000000/FFFFFF?text=${initial}`}
+              alt={`${profile.fullName}'s avatar`}
+              className="h-12 w-12 rounded-full border border-zinc-800 object-cover"
+            />
+            <button className="px-4 py-1.5 border border-zinc-700 text-sm font-medium rounded-lg hover:bg-zinc-800 transition-colors">
+              Change
+            </button>
+          </div>
         </div>
-      </div>
-    </SettingsCard>
-  );
+      </SettingsCard>
+    );
+  };
 
   const PasswordSettings = () => (
     <SettingsCard
       title="Password"
       description="Update your password. Make sure to use a strong one."
       footer={
-        <button className="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black transition-colors disabled:opacity-50">
+        <button className="px-5 py-2 bg-white text-black text-sm font-semibold rounded-lg hover:bg-zinc-200 transition-colors disabled:opacity-50">
           <Save size={16} className="inline-block mr-2 -mt-1" />
           Update Password
         </button>
@@ -213,38 +222,31 @@ const handleLogout = async () => {
     </SettingsCard>
   );
 
-  // --- Main Return ---
   return (
-    <main className="flex-1 overflow-y-auto bg-black text-white p-4 md:p-8 lg:p-12">
+    <main className="flex-1 overflow-y-auto bg-zinc-950 text-white p-4 md:p-8 lg:p-12">
       <div className="mx-auto max-w-4xl">
-        {/* Header */}
         <div className="mb-8">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-sm text-neutral-400 hover:text-white transition-colors mb-4"
+            className="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors mb-4"
           >
             <ArrowLeft size={16} />
             Back
           </button>
           <h1 className="text-3xl font-bold text-white">Settings</h1>
-          <p className="mt-2 text-neutral-400">
+          <p className="mt-2 text-zinc-400">
             Manage your account settings and preferences.
           </p>
         </div>
 
-        {/* Layout */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          
-          {/* Navigation */}
           <nav className="md:col-span-1">
             <div className="space-y-1">
               <TabButton id="profile" label="Profile" icon={User} />
               <TabButton id="password" label="Password" icon={Lock} />
-              {/* Theme button removed */}
             </div>
           </nav>
 
-          {/* Content */}
           <div className="md:col-span-3">
             <AnimatePresence mode="wait">
               <motion.div
@@ -259,24 +261,23 @@ const handleLogout = async () => {
               </motion.div>
             </AnimatePresence>
             
-            {/* Logout Section */}
             <div className="mt-12">
               <h2 className="text-xl font-semibold text-red-500">Logout Session</h2>
-              <p className="mt-1 text-sm text-neutral-400">
+              <p className="mt-1 text-sm text-zinc-400">
                 You will be logged out and returned to the login page.
               </p>
-              <div className="mt-4 p-6 bg-neutral-900 border border-red-500/30 rounded-lg flex items-center justify-between">
+              <div className="mt-4 p-6 bg-zinc-900/40 border border-red-500/30 rounded-2xl flex items-center justify-between">
                 <div>
                   <h3 className="font-medium text-white">End Session</h3>
-                  <p className="text-sm text-neutral-400">
+                  <p className="text-sm text-zinc-400">
                     Log out of your account on this device.
                   </p>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-black transition-colors"
+                  className="px-4 py-2 bg-red-500/10 text-red-500 border border-red-500/20 text-sm font-semibold rounded-lg hover:bg-red-500 hover:text-white transition-colors"
                 >
-                  <LogOut size={16} className="inline-block mr-2" />
+                  <LogOut size={16} className="inline-block mr-2 -mt-1" />
                   Logout
                 </button>
               </div>
@@ -287,4 +288,3 @@ const handleLogout = async () => {
     </main>
   );
 }
-
