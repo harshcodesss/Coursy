@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { BorderBeam } from "@/components/ui/border-beam";
 
 const FiArrowLeft = (props: any) => (
@@ -21,8 +22,7 @@ const FiArrowLeft = (props: any) => (
   </svg>
 );
 
-// FiLock
-const FiLock = ({ size = 24, ...props }) => (
+const FiLock = ({ size = 24, ...props }: any) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width={size}
@@ -46,7 +46,8 @@ const AuroraText = ({ children }: { children: React.ReactNode }) => (
   </span>
 );
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
+  const searchParams = useSearchParams();
   const [form, setForm] = useState({
     password: "",
     confirmPassword: "",
@@ -59,8 +60,7 @@ export default function ResetPasswordPage() {
   const [isTokenInvalid, setIsTokenInvalid] = useState(false);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tokenFromUrl = params.get("token");
+    const tokenFromUrl = searchParams.get("token");
     if (!tokenFromUrl) {
       setError("Invalid or missing password reset token.");
       setIsTokenInvalid(true);
@@ -70,7 +70,7 @@ export default function ResetPasswordPage() {
       setIsTokenInvalid(false);
       setToken(tokenFromUrl);
     }
-  }, []);
+  }, [searchParams]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -102,9 +102,7 @@ export default function ResetPasswordPage() {
     }
 
     if (isTokenInvalid || !token) {
-      setError(
-        "No valid token found. Please use the link from your email again."
-      );
+      setError("No valid token found. Please use the link from your email again.");
       return;
     }
 
@@ -112,14 +110,10 @@ export default function ResetPasswordPage() {
 
     try {
       const res = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-        }/api/users/reset-password`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/users/reset-password`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             token: token,
             password: form.password,
@@ -130,10 +124,7 @@ export default function ResetPasswordPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(
-          data.message ||
-            "Failed to reset password. The link may be invalid or expired."
-        );
+        throw new Error(data.message || "Failed to reset password. The link may be invalid or expired.");
       }
 
       setSuccess("Password reset successfully! Redirecting to login...");
@@ -155,22 +146,15 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black text-white flex items-center justify-center p-4">
-      {/* Replaced Link with <a> tag */}
       <a
         href="/login"
         className="absolute top-6 left-6 z-20 flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-black/50 text-white backdrop-blur-lg transition-colors hover:bg-white/10"
-        aria-label="Go back to login"
       >
         <FiArrowLeft size={20} />
       </a>
 
-      {/* Background Gradient */}
-      <div
-        aria-hidden="true"
-        className="absolute bottom-[-60vh] left-1/2 -translate-x-1/2 w-[220vw] max-w-[1900px] h-[120vh] rounded-full bg-gradient-to-tr from-cyan-400 to-teal-400 opacity-20 blur-3xl"
-      />
+      <div className="absolute bottom-[-60vh] left-1/2 -translate-x-1/2 w-[220vw] max-w-[1900px] h-[120vh] rounded-full bg-gradient-to-tr from-cyan-400 to-teal-400 opacity-20 blur-3xl" />
 
-      {/* Removed motion.div */}
       <div className="relative z-10 w-full max-w-md rounded-2xl border border-white/10 bg-black/20 p-8 shadow-lg backdrop-blur-lg">
         <div className="text-left">
           <h1 className="text-4xl font-bold tracking-tight mb-2">
@@ -186,10 +170,7 @@ export default function ResetPasswordPage() {
         ) : (
           <form onSubmit={handleSubmit} className="mt-8 space-y-6">
             <div className="relative">
-              <FiLock
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                size={18}
-              />
+              <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
                 type="password"
                 name="password"
@@ -198,16 +179,12 @@ export default function ResetPasswordPage() {
                 onChange={handleChange}
                 onBlur={handlePasswordBlur}
                 required
-                /* --- UPDATED className --- */
                 className={`w-full rounded-md bg-slate-700/50 py-3 pl-10 pr-4 text-white placeholder-slate-400 transition-colors duration-300 focus:outline-none focus:ring-1 ${passwordErrorClass}`}
               />
             </div>
 
             <div className="relative">
-              <FiLock
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                size={18}
-              />
+              <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
                 type="password"
                 name="confirmPassword"
@@ -220,9 +197,7 @@ export default function ResetPasswordPage() {
               />
             </div>
 
-            {error && (
-              <p className="text-red-500 text-sm text-center">{error}</p>
-            )}
+            {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
             <button
               type="submit"
@@ -234,19 +209,17 @@ export default function ResetPasswordPage() {
           </form>
         )}
 
-        <BorderBeam
-          duration={6}
-          size={400}
-          className="from-transparent via-teal-500 to-transparent"
-        />
-        <BorderBeam
-          duration={6}
-          delay={3}
-          size={400}
-          borderWidth={2}
-          className="from-transparent via-cyan-500 to-transparent"
-        />
+        <BorderBeam duration={6} size={400} className="from-transparent via-teal-500 to-transparent" />
+        <BorderBeam duration={6} delay={3} size={400} borderWidth={2} className="from-transparent via-cyan-500 to-transparent" />
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center text-white">Loading...</div>}>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }
