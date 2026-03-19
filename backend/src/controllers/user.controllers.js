@@ -33,8 +33,6 @@ const generateAccessAndRefreshToken = async (userId) => {
 
 const registerUser = asyncHandler(async (req, res) => {
   //TODO
-  console.log("starting registration");
-  console.log(req.body);
   const { fullname, email, password } = req.body;
 
   //validation
@@ -78,8 +76,6 @@ const registerUser = asyncHandler(async (req, res) => {
         otp: generatedOTP,
         otpExpiry: generatedOTPExpiry
       });
-      
-      console.log("Created User", user);
     
     // Sending Email from the backend
     await sendVerificationEmail(user.email, generatedOTP.toString()); 
@@ -93,8 +89,6 @@ const registerUser = asyncHandler(async (req, res) => {
     const createdUser = await User.findById(user._id).select(
       "-password -refreshToken -otp -otp_expiry" 
     );
-    
-    console.log("Created User to return", createdUser);
     
     if (!createdUser) {
       throw new ApiError(500, "Something went wrong while registering a user");
@@ -129,8 +123,6 @@ const verifyOTP = asyncHandler(async (req, res) => {
   if( !otp || !token) {
     throw new ApiError(400, "OTP and token are required");
   }
-
-  console.log(token);
 
   let decodedToken;
   try{
@@ -229,10 +221,7 @@ const resendOTP = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-    console.log("starting login");
-    console.log("raw body:", req.body);    
   const { email, password } = req.body;
-  console.log(email,password);
 
   //validation
   if (!email) {
@@ -263,8 +252,6 @@ const loginUser = asyncHandler(async (req, res) => {
   if (!loggedInUser) {
     throw new ApiError(500, "Something went wrong while login a user");
   }
-
-  console.log(loggedInUser);
 
   const options = {
     httpOnly: true,

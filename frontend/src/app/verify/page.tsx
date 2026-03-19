@@ -91,7 +91,6 @@ export default function Verify() {
       });
       const data = await response.json();
       if (response.ok) {
-        console.log("Verification successful!", data);
         router.push("/dashboard");
       } else {
         setError(data.message || "Invalid OTP or token.");

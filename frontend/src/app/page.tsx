@@ -3,6 +3,8 @@ import Header from "@/components/layout/header";
 import HeroSection from "@/components/layout/herosection";
 import DemoSection from "@/components/layout/demo";
 import Features from "@/components/layout/features";
+import Workflow from "@/components/layout/workflow";
+import AboutMePage from "@/components/layout/aboutme";
 import CTA from "@/components/layout/cta";
 import Footer from "@/components/layout/footer";
 
@@ -13,6 +15,8 @@ export default function Home() {
       <HeroSection />
       <DemoSection />
       <Features />
+      <Workflow />
+      <AboutMePage />
       <CTA />
       <Footer />
     </div>

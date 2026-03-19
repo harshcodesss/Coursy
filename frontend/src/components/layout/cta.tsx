@@ -1,85 +1,63 @@
 "use client";
 
 import React from "react";
-import { motion } from "motion/react";
-import { LampContainer } from "../ui/lamp";
-import { HoverBorderGradient } from "../ui/hover-border-gradient";
+import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
+import { NoiseBackground } from "@/components/ui/noise-background";
 
 export default function CTA() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <LampContainer>
-        {/* Heading */}
-        <motion.h1
-          initial={{ opacity: 0.5, y: 100 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{
-            delay: 0.3,
-            duration: 0.8,
-            ease: "easeInOut",
-          }}
-          className="mt-8 bg-gradient-to-br from-teal-500 to-cyan-300 py-4 bg-clip-text text-center text-3xl font-bold tracking-tight text-transparent md:text-6xl"
-        >
-          Meet your AI course assistant <br /> that builds while you teach
-        </motion.h1>
+    <section
+      className="relative flex w-full flex-col items-center justify-center px-4 py-32 md:py-48 overflow-hidden text-center"
+      id="cta"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        viewport={{ once: true }}
+        className="relative z-10 flex max-w-3xl flex-col items-center"
+      >
+        {/* 1. The Heading */}
+        <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tight">
+          Stop Planning. Start Creating. <br className="hidden md:block" />
+          <span className="bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">
+            Generate Your Course Now.
+          </span>
+        </h2>
 
-        {/* Subheading */}
-        <motion.h2
-          initial={{ opacity: 0.5, y: 80 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{
-            delay: 0.5,
-            duration: 0.8,
-            ease: "easeInOut",
-          }}
-          className="mt-8 text-center text-base md:text-xl text-neutral-400 max-w-2xl leading-relaxed"
-        >
-          Try Coursy and
-          create smarter, not harder.
-        </motion.h2>
+        {/* 2. The Subheading */}
+        <p className="mt-6 text-lg md:text-xl text-zinc-400 leading-relaxed max-w-2xl">
+          Quit the tedious planning and fragmented tools. Let Coursy AI handle
+          the architecture, so you can focus on the teaching.
+        </p>
 
-        {/* Animated Button */}
-        <motion.div
-          initial={{ opacity: 0, y: 60 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{
-            delay: 0.8,
-            duration: 0.8,
-            ease: "easeInOut",
-          }}
-          className="mt-10 flex justify-center"
+        {/* 3. The New Button UI (Theme Aligned) */}
+        <motion.div 
+          className="mt-10"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
-          <HoverBorderGradient
-            containerClassName="rounded-full"
-            as="button"
-            className="dark:bg-black bg-gray/80 text-white/80 dark:text-white flex items-center space-x-2 px-6 py-3 text-lg font-semibold"
+          <NoiseBackground
+            containerClassName="w-fit p-[2px] rounded-full mx-auto"
+            // Changed from pink/orange to Coursy's exact brand gradient
+            gradientColors={[
+              "rgb(45, 212, 191)", // teal-400
+              "rgb(34, 211, 238)", // cyan-400
+              "rgb(59, 130, 246)", // blue-500
+            ]}
           >
-            <span>Get Started!</span>
-          </HoverBorderGradient>
+            <button className="group relative flex items-center gap-2 h-full w-full cursor-pointer rounded-full bg-zinc-950 px-8 py-4 text-white text-lg font-semibold transition-colors duration-300 hover:bg-zinc-900 shadow-[0px_1px_0px_0px_var(--color-neutral-800)_inset]" 
+              onClick={(e) => {
+                e.preventDefault();
+                window.location.href = '/login';
+              }}>
+              Start Creating
+              <ArrowRight size={20} className="transition-transform duration-300 group-hover:translate-x-1" />
+            </button>
+          </NoiseBackground>
         </motion.div>
-      </LampContainer>
-    </div>
+      </motion.div>
+    </section>
   );
 }
-
-/* Simple Icon beside text */
-const CoursyLogo = () => {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 66 65"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-4 w-4 text-black dark:text-white"
-    >
-      <path
-        d="M8 8.05571C8 8.05571 54.9009 18.1782 57.8687 30.062C60.8365 41.9458 9.05432 57.4696 9.05432 57.4696"
-        stroke="currentColor"
-        strokeWidth="10"
-        strokeMiterlimit="3.86874"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-};

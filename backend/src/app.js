@@ -8,8 +8,6 @@ import {ApiError} from "./utils/ApiError.js"
 
 const app=express();
 
-console.log("process.env.CORS_ORIGIN",process.env.CORS_ORIGIN)
-
 app.use(
     cors({
         origin: process.env.CORS_ORIGIN,

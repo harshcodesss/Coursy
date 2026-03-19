@@ -18,7 +18,6 @@ export default function DashboardPage() {
     if (!prompt) return;
 
     setLoadingPrompt(true);
-    console.log("Submitting prompt:", prompt);
 
     // setTimeout( () =>{
     //   setLoadingPrompt(false);
@@ -39,7 +38,6 @@ export default function DashboardPage() {
       );
 
       const data = await res.json();
-      console.log("Backend response:", data);
 
       if (!res.ok) {
         throw new Error(data.message || "Failed to generate course");

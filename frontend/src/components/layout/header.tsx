@@ -1,77 +1,80 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Navbar,
   NavBody,
-  NavItems,
   MobileNav,
   MobileNavHeader,
-  MobileNavMenu,
-  MobileNavToggle,
   NavbarLogo,
   NavbarButton,
 } from "@/components/ui/resizable-navbar";
 
 const navLinks = [
-  { name: "Home", link: "/" },
+  { name: "Home", link: "#home" },
   { name: "Features", link: "#features" },
+  { name: "Workflow", link: "#workflow" },
   { name: "About", link: "#about" },
-  { name: "Contact", link: "#contact" },
 ];
 
 export default function Header() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScrollEvent = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScrollEvent);
+    return () => window.removeEventListener("scroll", handleScrollEvent);
+  }, []);
+
+  const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>, link: string) => {
+    e.preventDefault(); 
+    
+    if (link === "#home" || link === "/") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (link.startsWith("#")) {
+      const targetId = link.replace("#", "");
+      const element = document.getElementById(targetId);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+  };
 
   return (
-    <Navbar className="mt-5">
-      <NavBody>
+    <Navbar className="mt-5 w-full z-50">
+      <NavBody className="bg-zinc-900/50 backdrop-blur-md border border-zinc-800/50">
         <NavbarLogo />
 
-        <NavItems items={navLinks} />
+        <div className="hidden md:flex items-center gap-8">
+          {navLinks.map((item, idx) => (
+            <a
+              key={idx}
+              href={item.link}
+              onClick={(e) => handleScroll(e, item.link)}
+              className="text-sm font-medium text-zinc-400 hover:text-white transition-colors"
+            >
+              {item.name}
+            </a>
+          ))}
+        </div>
 
         <div className="flex items-center gap-4">
           <NavbarButton
             href="/signup"
             variant="primary"
-            className="text-black dark:text-black"
+            className="bg-white text-zinc-950 hover:bg-zinc-200 transition-colors font-semibold"
           >
             Get Started
           </NavbarButton>
         </div>
       </NavBody>
 
-      <MobileNav>
-        <MobileNavHeader>
+      <MobileNav className={`md:hidden transition-opacity duration-300 ${isScrolled ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+        <MobileNavHeader className="relative flex w-full items-center justify-start pl-4 pt-2">
           <NavbarLogo />
-          <MobileNavToggle
-            isOpen={isOpen}
-            onClick={() => setIsOpen((prev) => !prev)}
-          />
         </MobileNavHeader>
-
-        <MobileNavMenu isOpen={isOpen} onClose={() => setIsOpen(false)}>
-          {navLinks.map((item, idx) => (
-            <a
-              key={idx}
-              href={item.link}
-              onClick={() => setIsOpen(false)}
-              className="block w-full px-4 py-2 text-lg font-medium text-neutral-200 hover:text-white"
-            >
-              {item.name}
-            </a>
-          ))}
-
-          <div className="mt-4 flex w-full flex-col gap-3">
-            <NavbarButton
-              href="/signup"
-              variant="primary"
-              className="w-full text-black dark:text-black"
-            >
-              Get Started
-            </NavbarButton>
-          </div>
-        </MobileNavMenu>
       </MobileNav>
     </Navbar>
   );

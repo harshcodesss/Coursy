@@ -46,8 +46,6 @@ export default function Login() {
 
       const data = await res.json();
 
-      console.log(data);
-
       if (!res.ok) {
         throw new Error(data.message || "Login failed. Please check your credentials.");
       }
@@ -55,7 +53,6 @@ export default function Login() {
       // Redirect to home or dashboard on successful login
       router.push("/dashboard");
     } catch (err: any) {
-      console.log(err);
       setError(err.message);
     } finally {
       setLoading(false);

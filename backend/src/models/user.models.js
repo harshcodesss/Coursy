@@ -79,7 +79,6 @@ userSchema.methods.isPasswordCorrect = async function (password) {
 
 userSchema.methods.generateAccessToken = function () {
   //short lived access token
-  console.log("invoked");
   return jwt.sign(
     {
       _id: this._id,
