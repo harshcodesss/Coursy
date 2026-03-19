@@ -48,14 +48,16 @@ export default function SettingsPage() {
         method: "POST",
         credentials: "include",
       });
-    
-      setUser(null);
-      window.location.href = "/";
-      
     } catch (error) {
-      console.error("Logout failed:", error);
+      console.error("Backend logout failed:", error);
+    } finally {
+      localStorage.removeItem("accessToken");
+
+      document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; SameSite=Lax";
+
       setUser(null);
-      window.location.href = "/";
+      
+      window.location.href = "/login";
     }
   };
 
