@@ -78,7 +78,7 @@ export default function AboutMePage() {
 
             <div className="mt-8 pt-6 border-t border-zinc-800/50">
               <h4 className="mb-4 text-xs font-semibold text-zinc-500 uppercase tracking-widest">
-                Let's Connect
+                {"Let's connect"}
               </h4>
               <div className="flex flex-row items-center justify-start gap-2">
                 <a href={`https://www.linkedin.com/in/harsh-rathi-3870012aa/`} target="_blank" rel="noopener noreferrer">
