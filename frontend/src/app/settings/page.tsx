@@ -3,16 +3,17 @@
 import React, { useState } from "react";
 import { User, Lock, Save, LogOut, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation"; // Import useRouter for logout
+import { useRouter } from "next/navigation";
+import { useUser } from "@/context/Usercontext";
 
-// Define tab types
 type SettingsTab = "profile" | "password";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
-  const router = useRouter(); // Initialize router
+  const router = useRouter();
 
-  // State for form inputs (you'll wire this up to your backend)
+  const { setUser } = useUser();
+
   const [profile, setProfile] = useState({
     fullName: "Harsh Rathi",
     email: "harsh@example.com",
@@ -31,16 +32,22 @@ export default function SettingsPage() {
     setPasswords({ ...passwords, [e.target.name]: e.target.value });
   };
 
-  // --- Logout Function ---
-  const handleLogout = async () => {
-    // This is where you would call your backend's /api/users/logout endpoint
-    console.log("Logging out...");
-    // Example fetch:
-    // await fetch('/api/users/logout', { method: 'POST', credentials: 'include' });
-    router.push("/login"); // Redirect to login page
-  };
-
-  // --- Reusable Components ---
+const handleLogout = async () => {
+  try {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/users/logout`, {
+      method: "POST",
+      credentials: "include",
+    });
+  
+    setUser(null);
+    window.location.href = "/";
+    
+  } catch (error) {
+    console.error("Logout failed:", error);
+    setUser(null);
+    window.location.href = "/";
+  }
+};
 
   const TabButton = ({
     id,
@@ -249,7 +256,6 @@ export default function SettingsPage() {
               >
                 {activeTab === "profile" && <ProfileSettings />}
                 {activeTab === "password" && <PasswordSettings />}
-                {/* Theme content removed */}
               </motion.div>
             </AnimatePresence>
             

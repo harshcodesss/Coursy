@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { registerUser, loginUser, verifyOTP, resendOTP, forgotPassword, resetPassword, googleAuthCallback, getCurrentUser } from "../controllers/user.controllers.js";
+import { registerUser, loginUser, verifyOTP, resendOTP, forgotPassword, resetPassword, googleAuthCallback, getCurrentUser, logoutUser } from "../controllers/user.controllers.js";
 import { upload } from "../middlewares/multer.middlewares.js";
 import { verifyJWT } from "../middlewares/auth.middlewares.js";
 import passport from "passport";
@@ -24,7 +24,7 @@ router.route("/me").get(verifyJWT, getCurrentUser);
 // router.route("/refresh-token").post(refreshToken);
 
 // //secured routes
-// router.route("/logout").post(verifyjWT, logoutUser);
+router.route("/logout").post(verifyJWT, logoutUser);
 // router.route("/change-password").post(verifyjWT,changeCurrentPassword)
 // router.route("/current-user").get(verifyjWT,getCurrentUser);
 

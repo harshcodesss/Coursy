@@ -46,8 +46,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         if (!res.ok) {
           if (res.status === 401 || data.message === "jwt expired") {
             localStorage.removeItem("token");
-            setUser(null);
-            window.location.href = "/login";
+            setUser(null); 
             return;
           }
           setUser(null);
