@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const protectedRoutes = ['/dashboard', '/profile', '/settings'];
-const authRoutes = ['/login', '/signup', '/verify','auth-success', '/password-reset', '/forgot-password'];
+const authRoutes = ['/login', '/signup', '/verify','/auth-success', '/password-reset', '/forgot-password'];
 
 export function handleAuth(request: NextRequest) {
     const sessionToken = request.cookies.get('accessToken')?.value;

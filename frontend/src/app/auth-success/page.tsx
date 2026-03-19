@@ -12,7 +12,9 @@ function AuthHandler() {
 
     if (token) {
       localStorage.setItem("accessToken", token);
-      console.log("Token secured!");
+      document.cookie = `accessToken=${token}; path=/; max-age=604800; Secure; SameSite=Lax`;
+      
+      console.log("Token secured in Local Storage AND Cookie!");
     }
 
     console.log("Auth success, redirecting to dashboard...");
