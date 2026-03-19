@@ -39,7 +39,7 @@ export const sendEmail = async (options) => {
       html: options.html,
     };
 
-    const result = await transport.sendMail(mailOptions);
+    const result = await transporter.sendMail(mailOptions);
     console.log(`Email sent successfully to ${options.to} with subject "${options.subject}"`);
     return result;
   } catch (error) {
