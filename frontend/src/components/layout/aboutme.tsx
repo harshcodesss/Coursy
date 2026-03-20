@@ -72,7 +72,7 @@ export default function AboutMePage() {
           <div className="flex flex-1 flex-col justify-between">
             <div>
               <p className="text-base md:text-lg text-zinc-400 leading-relaxed">
-                I'm a passionate Full Stack Developer and UI/UX enthusiast dedicating to bridging the gap between complexity and effortless usability. My focus is on building robust modern web applications that prioritize user experience and clean code architecture. Coursy was built to solve the fragmentation of modern online learning.
+                {"I’m a passionate software developer who enjoys building products that solve real problems. I built Coursy to simplify learning by generating structured, personalized courses using AI. The goal was to combine my interest in backend systems and AI to create something genuinely useful for students."}
               </p>
             </div>
 
