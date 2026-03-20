@@ -11,7 +11,7 @@ const contactInfo = [
     id: 1,
     name: "LinkedIn",
     designation: "Professional Network",
-    image: "/linkedIn.png", 
+    image: "/LinkedIn.png", 
   },
   {
     id: 2,
