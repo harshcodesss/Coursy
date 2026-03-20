@@ -8,6 +8,8 @@ import {
   MobileNavHeader,
   NavbarLogo,
   NavbarButton,
+  MobileNavToggle,
+  MobileNavMenu,
 } from "@/components/ui/resizable-navbar";
 
 const navLinks = [
@@ -19,6 +21,8 @@ const navLinks = [
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
+  
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScrollEvent = () => {
@@ -43,7 +47,7 @@ export default function Header() {
   };
 
   return (
-    <Navbar className="mt-5 w-full z-50">
+    <Navbar className="mt-5 w-full z-[100]">
       <NavBody className="bg-zinc-900/50 backdrop-blur-md border border-zinc-800/50">
         <NavbarLogo />
 
@@ -60,7 +64,7 @@ export default function Header() {
           ))}
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 hidden md:flex">
           <NavbarButton
             href="/signup"
             variant="primary"
@@ -71,10 +75,46 @@ export default function Header() {
         </div>
       </NavBody>
 
-      <MobileNav className={`md:hidden transition-opacity duration-300 ${isScrolled ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
-        <MobileNavHeader className="relative flex w-full items-center justify-start pl-4 pt-2">
+      <MobileNav className="md:hidden">
+        <MobileNavHeader className="relative flex w-full items-center justify-between px-4 pt-2">
           <NavbarLogo />
+          <MobileNavToggle 
+            isOpen={isMobileMenuOpen} 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+          />
         </MobileNavHeader>
+
+        <MobileNavMenu 
+          isOpen={isMobileMenuOpen} 
+          onClose={() => setIsMobileMenuOpen(false)}
+          className="bg-zinc-950 border border-zinc-800 shadow-2xl"
+        >
+          <div className="flex flex-col gap-6 w-full pt-2">
+            {navLinks.map((item, idx) => (
+              <a
+                key={idx}
+                href={item.link}
+                onClick={(e) => {
+                  handleScroll(e, item.link);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="text-lg font-medium text-zinc-300 hover:text-white transition-colors"
+              >
+                {item.name}
+              </a>
+            ))}
+            
+            <div className="pt-4 border-t border-zinc-800 w-full">
+              <NavbarButton
+                href="/signup"
+                variant="primary"
+                className="w-full bg-white text-zinc-950 hover:bg-zinc-200 transition-colors font-semibold flex justify-center"
+              >
+                Get Started
+              </NavbarButton>
+            </div>
+          </div>
+        </MobileNavMenu>
       </MobileNav>
     </Navbar>
   );

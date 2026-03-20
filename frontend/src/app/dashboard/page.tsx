@@ -19,11 +19,6 @@ export default function DashboardPage() {
 
     setLoadingPrompt(true);
 
-    // setTimeout( () =>{
-    //   setLoadingPrompt(false);
-    // },5000);
-    
-
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/courses/generate`,
@@ -102,39 +97,44 @@ export default function DashboardPage() {
   if (!user) return null;
 
   return (
-    <div className="flex h-screen bg-black text-white">
+    <div className="flex h-[100dvh] md:h-screen bg-black text-white">
 
-      <main className="flex-1 overflow-y-auto flex flex-col justify-center mx-auto max-w-4xl p-4 md:p-8 lg:p-12">
-        <div className="flex flex-col items-center w-full">
+      <main className="flex-1 overflow-y-auto flex flex-col justify-start md:justify-center mx-auto max-w-4xl p-4 md:p-8 lg:p-12">
+        
+        <div className="flex flex-col w-full h-full md:h-auto">
 
-          <LayoutTextFlipDemo userName={user?.fullname?.split(" ")[0] || "Creator"} />
+          <div className="flex flex-col items-center w-full flex-1 justify-center md:flex-none md:justify-start">
+            <LayoutTextFlipDemo userName={user?.fullname?.split(" ")[0] || "Creator"} />
 
-          {/* PROMPT INPUT BOX */}
-
-          <div className="w-full mt-10">
-            <PromptBox
-              prompt={prompt}
-              setPrompt={setPrompt}
-              isLoading={loadingPrompt}
-              onSubmit={handleSubmit}
-            />
+            {/* PROMPT INPUT BOX */}
+            <div className="w-full mt-10">
+              <PromptBox
+                prompt={prompt}
+                setPrompt={setPrompt}
+                isLoading={loadingPrompt}
+                onSubmit={handleSubmit}
+              />
+            </div>
           </div>
 
-          <div className="mt-16 w-full">
+          <div className="mt-8 md:mt-16 w-full pb-8 md:pb-0">
             <h2 className="text-xl font-semibold text-white">
               Start with an example
             </h2>
-            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+            
+            <div className="mt-4 flex md:grid overflow-x-auto md:overflow-visible gap-4 snap-x snap-mandatory md:snap-none hide-scrollbar grid-cols-1 md:grid-cols-2 lg:grid-cols-4 pb-4 md:pb-0">
               {examplePrompts.map((item) => (
-                <ExampleCard
-                  key={item.title}
-                  title={item.title}
-                  description={item.description}
-                  onSelect={() => handlePromptSelect(item.prompt)}
-                />
+                <div key={item.title} className="min-w-[85%] sm:min-w-[280px] snap-center md:min-w-0 md:snap-align-none">
+                  <ExampleCard
+                    title={item.title}
+                    description={item.description}
+                    onSelect={() => handlePromptSelect(item.prompt)}
+                  />
+                </div>
               ))}
             </div>
           </div>
+
         </div>
       </main>
     </div>

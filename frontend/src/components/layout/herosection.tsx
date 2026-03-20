@@ -1,17 +1,23 @@
 "use client";
 import React from "react";
-import { motion } from "framer-motion"; // or "motion/react" if you prefer
+import { motion } from "framer-motion";
+import Link from "next/link";
 import { Spotlight } from "@/components/ui/spotlight-new";
 import { Button } from "@/components/ui/button";
 
 export default function HeroSection() {
+  const scrollToWorkflow = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    const workflowSection = document.getElementById("workflow");
+    if (workflowSection) {
+      workflowSection.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
-    // Replaced min-h-screen with pt-40 pb-16 to close the gap
     <section className="relative flex flex-col items-center justify-center pt-40 pb-16 md:pt-48 md:pb-24 overflow-hidden bg-background text-foreground px-6">
-      {/* Animated spotlight background */}
       <Spotlight />
 
-      {/* Foreground content */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
@@ -34,14 +40,17 @@ export default function HeroSection() {
           making teaching effortless.
         </p>
         <div className="mt-10 flex items-center justify-center gap-4">
-          <Button size="lg">Get Started</Button>
-          <Button variant="outline" size="lg">
+          <Link href="/signup" passHref>
+            <Button size="lg">Get Started</Button>
+          </Link>
+
+          <Button variant="outline" size="lg" onClick={scrollToWorkflow}>
             Learn More
           </Button>
+
         </div>
       </motion.div>
 
-      {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent pointer-events-none" />
     </section>
   );
