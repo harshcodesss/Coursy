@@ -1,38 +1,22 @@
-import { OAuth2Client } from "google-auth-library";
 import nodemailer from "nodemailer";
 
-const oauth2Client = new OAuth2Client(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI
-);
-
-oauth2Client.setCredentials({
-  refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+  connectionTimeout: 30000, 
+  greetingTimeout: 30000,
+  socketTimeout: 30000,
 });
 
 export const sendEmail = async (options) => {
   try {
-    const accessToken = await oauth2Client.getAccessToken();
-
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
-      auth: {
-        type: "OAuth2",
-        user: process.env.EMAIL_USER,
-        clientId: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        refreshToken: process.env.GOOGLE_REFRESH_TOKEN,
-      },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 10000,
-    });
-
     const mailOptions = {
-      from: `"Coursy" <${process.env.GOOGLE_EMAIL}>`,
+      from: `"Coursy" <${process.env.EMAIL_USER}>`,
       to: options.to,
       subject: options.subject,
       text: options.text,
@@ -40,10 +24,10 @@ export const sendEmail = async (options) => {
     };
 
     const result = await transporter.sendMail(mailOptions);
-    console.log(`Email sent successfully to ${options.to} with subject "${options.subject}"`);
+    console.log(`✅ Email sent successfully to ${options.to}`);
     return result;
   } catch (error) {
-    console.error(`Error in sendEmail helper to ${options.to}:`, error.message);
+    console.error(`❌ Error in sendEmail helper:`, error.message);
     throw new Error(`Failed to send email. Reason: ${error.message}`);
   }
 };

@@ -70,14 +70,13 @@ const registerUser = asyncHandler(async (req, res) => {
     try {
       const user = await User.create({
         fullname,
-        avatar: "../../public/temp/avatarLocal.jpg",
+        avatar: "/temp/avatarLocal.jpg",
         email,
         password,
         otp: generatedOTP,
         otpExpiry: generatedOTPExpiry
       });
     
-    // Sending Email from the backend
     await sendVerificationEmail(user.email, generatedOTP.toString()); 
 
     const verificationToken = jwt.sign(
@@ -103,8 +102,8 @@ const registerUser = asyncHandler(async (req, res) => {
     .status(201)
     .json(new ApiResponse(
         201, 
-        responseData, // Pass the object here
-        "User registered successfully. Please check your email for OTP." // This is the message
+        responseData,
+        "User registered successfully. Please check your email for OTP."
     ));
 
   } catch (error) {
@@ -134,6 +133,7 @@ const verifyOTP = asyncHandler(async (req, res) => {
   const userId = decodedToken?.id;
 
   const user = await User.findById(userId);
+
 
   if(!user){
     throw new ApiError(404, "User not found");

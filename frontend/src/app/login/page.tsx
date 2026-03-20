@@ -50,8 +50,7 @@ export default function Login() {
         throw new Error(data.message || "Login failed. Please check your credentials.");
       }
 
-      // Redirect to home or dashboard on successful login
-      router.push("/dashboard");
+      window.location.href = "/dashboard";
     } catch (err: any) {
       setError(err.message);
     } finally {

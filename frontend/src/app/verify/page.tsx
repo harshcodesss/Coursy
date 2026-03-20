@@ -89,8 +89,17 @@ function VerifyContent() {
         })
       });
       const data = await response.json();
+
       if (response.ok) {
-        router.push("/dashboard");
+
+        const accessToken = data?.data?.accessToken || data?.accessToken;
+
+        if (accessToken) {
+          localStorage.setItem("accessToken", accessToken);
+          document.cookie = `accessToken=${accessToken}; path=/; max-age=604800; Secure; SameSite=Lax`;
+        }
+
+        window.location.href = "/dashboard";
       } else {
         setError(data.message || "Invalid OTP or token.");
       }

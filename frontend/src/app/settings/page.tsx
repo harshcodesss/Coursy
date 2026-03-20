@@ -176,7 +176,7 @@ export default function SettingsPage() {
           </label>
           <div className="mt-2 flex items-center gap-4">
             <img
-              src={user?.avatar || `https://placehold.co/48x48/000000/FFFFFF?text=${initial}`}
+              src={(user?.avatar && !user.avatar.includes("temp") && !user.avatar.includes("public")) ? user.avatar : "/avatarLocal.jpg"}
               alt={`${profile.fullName}'s avatar`}
               className="h-12 w-12 rounded-full border border-zinc-800 object-cover"
             />
