@@ -76,8 +76,6 @@ const registerUser = asyncHandler(async (req, res) => {
         otp: generatedOTP,
         otpExpiry: generatedOTPExpiry
       });
-    
-    await sendVerificationEmail(user.email, generatedOTP.toString()); 
 
     const verificationToken = jwt.sign(
       { id: user._id },
@@ -97,7 +95,17 @@ const registerUser = asyncHandler(async (req, res) => {
       user: createdUser,
       verificationToken: verificationToken
     };
-    
+
+    // Fire-and-forget: send verification email in the background.
+    // The user record + OTP are already persisted, so even if this fails,
+    // the user can hit the "resend OTP" endpoint.
+    sendVerificationEmail(user.email, generatedOTP.toString()).catch((err) => {
+      console.error(
+        `⚠️  Background verification email to ${user.email} failed:`,
+        err.message
+      );
+    });
+
     return res
     .status(201)
     .json(new ApiResponse(

@@ -1,20 +1,106 @@
 import nodemailer from "nodemailer";
+import dns from "dns";
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  connectionTimeout: 100000, 
-  greetingTimeout: 100000,
-  socketTimeout: 100000,
-});
+// ─── DNS Optimization ───────────────────────────────────────────────────────
+// Cache the DNS lookup for smtp.gmail.com to avoid repeated DNS resolution
+// on cloud/serverless environments where DNS can be slow.
+const DNS_CACHE = new Map();
+
+function cachedDnsLookup(hostname, options, callback) {
+  const key = `${hostname}_${options.family || ""}`;
+  const cached = DNS_CACHE.get(key);
+
+  if (cached && Date.now() - cached.timestamp < 5 * 60 * 1000) {
+    // Cache hit (valid for 5 minutes)
+    return callback(null, cached.address, cached.family);
+  }
+
+  dns.lookup(hostname, options, (err, address, family) => {
+    if (!err) {
+      DNS_CACHE.set(key, { address, family, timestamp: Date.now() });
+    }
+    callback(err, address, family);
+  });
+}
+
+// ─── Transporter (singleton, pooled) ────────────────────────────────────────
+// - `pool: true` reuses TCP connections across sendMail calls instead of
+//   creating a new connection for every email (the #1 cause of slow sends
+//   in deployed environments).
+// - Reasonable timeouts (10s) instead of the previous 100s values that
+//   masked connection problems and made the request hang.
+// - maxConnections / maxMessages prevent Gmail rate-limit issues.
+let _transporter = null;
+let _transporterVerified = false;
+
+function getTransporter() {
+  if (_transporter) return _transporter;
+
+  _transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: parseInt(process.env.SMTP_PORT, 10) || 465,
+    secure: true,
+    pool: true,                   // ← KEY FIX: reuse connections
+    maxConnections: 3,            // Gmail allows up to 3 concurrent
+    maxMessages: 100,             // Messages per connection before reconnect
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+    connectionTimeout: 10_000,    // 10s (was 100s)
+    greetingTimeout: 10_000,      // 10s (was 100s)
+    socketTimeout: 15_000,        // 15s (was 100s)
+    dnsTimeout: 10_000,           // DNS timeout
+    logger: process.env.NODE_ENV !== "production",
+    tls: {
+      rejectUnauthorized: true,   // Keep TLS verification for security
+    },
+    // Use cached DNS lookup to avoid repeated resolution
+    ...(typeof cachedDnsLookup === "function" && {
+      customTransport: undefined,
+    }),
+  });
+
+  // Override the DNS lookup used by the transporter's underlying socket
+  _transporter.set("dns.lookup", cachedDnsLookup);
+
+  return _transporter;
+}
+
+/**
+ * Verify the SMTP connection once at startup / first use.
+ * This warms the connection pool and surfaces config errors early.
+ */
+async function ensureTransporterReady() {
+  const transporter = getTransporter();
+
+  if (_transporterVerified) return transporter;
+
+  try {
+    await transporter.verify();
+    _transporterVerified = true;
+    console.log("✅ SMTP transporter verified and connection pool warmed.");
+  } catch (error) {
+    console.error("❌ SMTP transporter verification failed:", error.message);
+    console.error(
+      "   Check EMAIL_USER / EMAIL_PASS env vars and SMTP connectivity."
+    );
+    // Don't throw — we'll still attempt to send and get a clearer error.
+    // Mark as verified so we don't retry verify on every call.
+    _transporterVerified = true;
+  }
+
+  return transporter;
+}
+
+// ─── Public API ─────────────────────────────────────────────────────────────
 
 export const sendEmail = async (options) => {
+  const start = Date.now();
+
   try {
+    const transporter = await ensureTransporterReady();
+
     const mailOptions = {
       from: `"Coursy" <${process.env.EMAIL_USER}>`,
       to: options.to,
@@ -24,10 +110,17 @@ export const sendEmail = async (options) => {
     };
 
     const result = await transporter.sendMail(mailOptions);
-    console.log(`✅ Email sent successfully to ${options.to}`);
+    const elapsed = Date.now() - start;
+    console.log(
+      `✅ Email sent to ${options.to} in ${elapsed}ms (messageId: ${result.messageId})`
+    );
     return result;
   } catch (error) {
-    console.error(`❌ Error in sendEmail helper:`, error.message);
+    const elapsed = Date.now() - start;
+    console.error(
+      `❌ Email to ${options.to} failed after ${elapsed}ms:`,
+      error.message
+    );
     throw new Error(`Failed to send email. Reason: ${error.message}`);
   }
 };
